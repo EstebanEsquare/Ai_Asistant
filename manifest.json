@@ -1,13 +1,13 @@
 {
   "name": "Pamuk: AI Eğitmenim",
   "short_name": "Pamuk",
-  "id": "pamuk-v9-final",
+  "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0d0d0f",
   "theme_color": "#c38fff",
-  "orientation": "landscape",
+  "orientation": "any",
   "icons": [
     {
       "src": "icon-512.png",

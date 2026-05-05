@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk Öğretmen</title>
+    <title>Pamuk Öğretmen v12</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
@@ -13,15 +13,14 @@
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
         
         .app-shell { display: flex; height: 100vh; width: 100vw; position: relative; }
-        
-        /* Ayarlar Butonu */
-        .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; }
 
         .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
         #cat-svg { width: 85%; max-width: 380px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
 
         .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
         #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
+        
         .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
         .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
         .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
@@ -29,11 +28,9 @@
         .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
 
         #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .setup-card { background: var(--card); padding: 35px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; }
-        input { width: 100%; padding: 18px; margin: 8px 0; border-radius: 16px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1.1rem; text-align: center; }
+        .setup-card { background: var(--card); padding: 35px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; overflow-y: auto; max-height: 90vh; }
+        input, select { width: 100%; padding: 18px; margin: 8px 0; border-radius: 16px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1rem; text-align: center; }
         .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-top: 10px; }
-        .btn-test { background: #2d2d35; color: white; margin-bottom: 10px; font-size: 0.9rem; }
-        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -41,13 +38,13 @@
 
 <div id="onboarding">
     <div class="setup-card">
-        <h2 id="st-title">Merhaba! 👋</h2>
+        <h2 id="st-title">Pamuk'u Yapılandır 🐾</h2>
         <div id="api-panel">
-            <p id="st-desc" style="color: #999;">Lütfen API ayarlarını yapılandırın.</p>
-            <input type="password" id="key-primary" placeholder="Ana API Anahtarı (Gemini/OpenAI)">
-            <input type="password" id="key-backup" placeholder="Yedek API Anahtarı (Opsiyonel)">
-            <button class="btn-action btn-test" onclick="testCurrentKey()">Seçili Anahtarı Test Et</button>
-            <button class="btn-action" onclick="saveKeys()">Kaydet ve Devam Et</button>
+            <input type="password" id="key-primary" placeholder="Ana API Anahtarı">
+            <input type="password" id="key-backup" placeholder="Yedek API Anahtarı">
+            <select id="voice-select"><option value="">Ses Yükleniyor...</option></select>
+            <button class="btn-action" style="background:#2d2d35; color:white;" onclick="testVoice()">Sesi Test Et</button>
+            <button class="btn-action" onclick="saveConfig()">Sistemi Başlat</button>
         </div>
         <div id="profile-panel" class="hidden">
             <p id="q-text" style="color: var(--accent); font-weight: bold;"></p>
@@ -79,63 +76,71 @@
 </div>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(() => console.log("PWA Aktif"));
-        });
-    }
-
-    let p = JSON.parse(localStorage.getItem('p_v11_prof')) || {};
-    let keyPrimary = localStorage.getItem('p_v11_key1');
-    let keyBackup = localStorage.getItem('p_v11_key2');
+    let synth = window.speechSynthesis;
+    let voices = [];
+    let selectedVoice = null;
+    let p = JSON.parse(localStorage.getItem('p_v12_prof')) || {};
+    let k1 = localStorage.getItem('p_v12_k1'), k2 = localStorage.getItem('p_v12_k2');
     let step = 0;
-    const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıfa gidiyorsun?"];
-    const ks = ["name", "age", "gender", "grade"];
+    const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Sınıfın?"], ks = ["name", "age", "gender", "grade"];
 
-    const synth = window.speechSynthesis;
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'tr-TR';
-
-    async function testCurrentKey() {
-        const testKey = document.getElementById('key-primary').value.trim();
-        if(!testKey) return alert("Lütfen önce bir anahtar girin.");
+    // Ses Motoru Optimizasyonu
+    function loadVoices() {
+        voices = synth.getVoices();
+        const vSelect = document.getElementById('voice-select');
+        vSelect.innerHTML = '';
         
-        alert("Bağlantı test ediliyor, lütfen bekleyin...");
-        const result = await validateKey(testKey);
-        if(result) alert("Başarılı! API anahtarı çalışıyor.");
-        else alert("Hata! Anahtar geçersiz veya model erişimi kapalı.");
+        // Türkçe sesleri filtrele ve önceliğe göre sırala
+        const trVoices = voices.filter(v => v.lang.includes('tr-TR'));
+        trVoices.sort((a, b) => (b.name.includes('Google') || b.name.includes('Natural')) ? 1 : -1);
+
+        trVoices.forEach((voice, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerHTML = voice.name + (voice.localService ? ' (Cihazın Sesi)' : '');
+            vSelect.appendChild(opt);
+        });
+        selectedVoice = trVoices[0];
     }
 
-    async function validateKey(k) {
-        // Yeni preview model ismi ile test
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k}`;
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
-            });
-            return res.ok;
-        } catch(e) { return false; }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    function saveKeys() {
-        keyPrimary = document.getElementById('key-primary').value.trim();
-        keyBackup = document.getElementById('key-backup').value.trim();
-        if(!keyPrimary) return alert("Ana API anahtarı gereklidir.");
+    function testVoice() {
+        const vSelect = document.getElementById('voice-select');
+        selectedVoice = voices.filter(v => v.lang.includes('tr-TR'))[vSelect.value];
+        speak("Merhaba! Ben Pamuk Öğretmen. Sesim şimdi nasıl geliyor?");
+    }
+
+    function saveConfig() {
+        k1 = document.getElementById('key-primary').value.trim();
+        k2 = document.getElementById('key-backup').value.trim();
+        const vIdx = document.getElementById('voice-select').value;
+        selectedVoice = voices.filter(v => v.lang.includes('tr-TR'))[vIdx];
         
-        localStorage.setItem('p_v11_key1', keyPrimary);
-        localStorage.setItem('p_v11_key2', keyBackup);
+        if(!k1) return alert("Ana anahtar gereklidir.");
+        localStorage.setItem('p_v12_k1', k1);
+        localStorage.setItem('p_v12_k2', k2);
+        localStorage.setItem('p_v12_voice', selectedVoice ? selectedVoice.name : '');
         
         document.getElementById('api-panel').classList.add('hidden');
         document.getElementById('profile-panel').classList.remove('hidden');
         askProfile();
     }
 
-    function askProfile() {
-        document.getElementById('q-text').innerText = qs[step];
-        speak(qs[step]);
+    function speak(t) {
+        const u = new SpeechSynthesisUtterance(t);
+        u.voice = selectedVoice;
+        u.lang = 'tr-TR';
+        u.pitch = 1.1; // Hafif neşeli ton
+        u.rate = 0.95; // Daha anlaşılır hız
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
+        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
+        synth.speak(u);
     }
+
+    function askProfile() { document.getElementById('q-text').innerText = qs[step]; speak(qs[step]); }
 
     function nextProfileStep() {
         const val = document.getElementById('q-input').value.trim();
@@ -145,87 +150,59 @@
         step++;
         if(step < qs.length) askProfile();
         else {
-            localStorage.setItem('p_v11_prof', JSON.stringify(p));
+            localStorage.setItem('p_v12_prof', JSON.stringify(p));
             document.getElementById('onboarding').classList.add('hidden');
             greet();
         }
     }
 
     function openSettings() {
-        if(confirm("API Ayarlarını değiştirmek istiyor musunuz? Mevcut profiliniz korunacaktır.")) {
+        if(confirm("Ayarları güncellemek istiyor musunuz?")) {
             document.getElementById('onboarding').classList.remove('hidden');
             document.getElementById('api-panel').classList.remove('hidden');
             document.getElementById('profile-panel').classList.add('hidden');
-            document.getElementById('key-primary').value = keyPrimary || "";
-            document.getElementById('key-backup').value = keyBackup || "";
         }
     }
 
-    function speak(t) {
-        const u = new SpeechSynthesisUtterance(t);
-        u.lang = 'tr-TR';
-        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
-        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
-        synth.speak(u);
-    }
-
-    function greet() {
-        const m = `Merhaba ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`;
-        addB(m, 'ai'); speak(m);
-    }
-
+    function greet() { const m = `Selam ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`; addB(m, 'ai'); speak(m); }
     function addB(t, cl) {
-        const w = document.getElementById('chat-window');
-        const b = document.createElement('div');
-        b.className = `bubble ${cl}`;
-        b.innerText = t;
-        w.appendChild(b);
-        w.scrollTop = w.scrollHeight;
+        const w = document.getElementById('chat-window'), b = document.createElement('div');
+        b.className = `bubble ${cl}`; b.innerText = t;
+        w.appendChild(b); w.scrollTop = w.scrollHeight;
     }
 
-    document.getElementById('mic-btn').onclick = () => recognition.start();
-    recognition.onresult = (e) => {
-        const t = e.results[0][0].transcript;
-        addB(t, 'user');
-        callAI(t);
-    };
+    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.lang = 'tr-TR';
+    document.getElementById('mic-btn').onclick = () => rec.start();
+    rec.onresult = (e) => { const t = e.results[0][0].transcript; addB(t, 'user'); callAI(t); };
 
     async function callAI(text, isBackup = false) {
-        const activeKey = isBackup ? keyBackup : keyPrimary;
-        if(!activeKey) return;
-
-        let url, body, headers;
-        if (activeKey.startsWith('sk-')) {
-            url = 'https://api.openai.com/v1/chat/completions';
-            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeKey}` };
-            body = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: "Sen şefkatli bir ilkokul öğretmenisin."}, {role: "user", content: text}] });
-        } else if (activeKey.startsWith('AIza')) {
-            // gemini-3.1-flash-lite-preview modeli entegrasyonu
-            url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${activeKey}`;
-            headers = { 'Content-Type': 'application/json' };
-            body = JSON.stringify({ contents: [{ parts: [{ text: `Sen öğretmen Pamuk'sun. Karşındaki çocuk: ${p.name}, Sınıf: ${p.grade}. Soru: ${text}` }] }] });
-        }
+        const key = isBackup ? k2 : k1;
+        if(!key) return;
+        
+        // Akıcılık için sistem talimatı: Kısa cevaplar ver, doğal konuş.
+        const prompt = `Sen neşeli bir ilkokul öğretmenisin. Adın Pamuk. Karşındaki öğrenci ${p.name}, ${p.grade}. sınıfta. Cevaplarını bir robot gibi değil, sanki yanındaymışsın gibi samimi, kısa ve akıcı ver. Asla teknik terimlere boğma. Soru: ${text}`;
 
         try {
-            const res = await fetch(url, { method: 'POST', headers, body });
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
             const data = await res.json();
-            
-            if(!res.ok) throw new Error(data.error?.message || "API Erişilemiyor");
-            
-            let reply = activeKey.startsWith('AIza') ? data.candidates[0].content.parts[0].text : data.choices[0].message.content;
+            if(!res.ok) throw new Error();
+            const reply = data.candidates[0].content.parts[0].text;
             addB(reply, 'ai'); speak(reply);
         } catch (e) {
-            console.error(e);
-            if(!isBackup && keyBackup) {
-                addB("Ana anahtarda sorun oluştu, yedeğe bağlanıyorum...", 'ai');
-                callAI(text, true);
-            } else {
-                addB(`Hata oluştu: ${e.message}. Lütfen Ayarlar (⚙️) kısmından anahtarınızı kontrol edin.`, 'ai');
-            }
+            if(!isBackup && k2) callAI(text, true);
+            else addB("Bağlantıda bir sorun oldu, lütfen anahtarını kontrol et.", 'ai');
         }
     }
 
-    window.onload = () => { if(keyPrimary && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); } };
+    window.onload = () => {
+        setTimeout(loadVoices, 500);
+        if(k1 && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); }
+    };
 </script>
 </body>
 </html>

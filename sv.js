@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pamuk-v3';
+const CACHE_NAME = 'pamuk-v4';
 const ASSETS = [
   '/index.html',
   '/manifest.json'
@@ -22,6 +22,7 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Önce ağı dene, başarısız olursa önbelleğe bak
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );

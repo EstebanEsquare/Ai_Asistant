@@ -1,7 +1,7 @@
 {
-  "name": "Pamuk Öğretmen",
+  "name": "Pamuk: AI Eğitmenim",
   "short_name": "Pamuk",
-  "id": "pamuk-ai-asistant-v8",
+  "id": "pamuk-v9-final",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

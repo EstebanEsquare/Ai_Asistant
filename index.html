@@ -5,197 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk AI</title>
+    <title>Pamuk</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        :root { --bg: #0f0f12; --card: #1c1c21; --accent: #c38fff; --text: #f0f0f5; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
-        
-        .container { display: flex; height: 100vh; width: 100vw; }
-
-        /* Karakter Paneli */
-        .character-pane {
-            flex: 1.2; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, #251b33 0%, #0f0f12 100%);
-            border-right: 1px solid #2d2d35;
-        }
-        #cat-wrapper { width: 85%; max-width: 380px; }
-
-        /* Chat Paneli */
-        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #13131a; }
-        #chat-window {
-            flex: 1; overflow-y: auto; background: var(--card); border-radius: 24px;
-            padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px;
-            box-shadow: inset 0 4px 20px rgba(0,0,0,0.4);
-        }
-        .bubble { padding: 14px 18px; border-radius: 20px; max-width: 85%; font-size: 1rem; line-height: 1.5; }
-        .ai { background: #2a2a35; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #3d3d4d; }
+        :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
+        .app { display: flex; height: 100vh; width: 100vw; }
+        .side-left { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
+        .side-right { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
+        #chat { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
+        .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
+        .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
         .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
-
-        #mic-btn {
-            width: 72px; height: 72px; border-radius: 50%; border: none;
-            background: var(--accent); font-size: 32px; cursor: pointer;
-            box-shadow: 0 8px 25px rgba(195, 143, 255, 0.3); margin: 0 auto;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        /* Onboarding */
-        #onboarding {
-            position: fixed; inset: 0; background: var(--bg); z-index: 2000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px;
-        }
-        .setup-card { background: var(--card); padding: 30px; border-radius: 28px; width: 100%; max-width: 420px; text-align: center; border: 1px solid #333; }
-        input {
-            width: 100%; padding: 16px; margin: 20px 0; border-radius: 14px; border: 2px solid #3d3d4d;
-            background: #0a0a0c; color: #fff; font-size: 1rem; text-align: center;
-        }
-        .btn-main { width: 100%; padding: 16px; border-radius: 14px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
-
+        #mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
+        #setup { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .card { background: var(--card); padding: 35px; border-radius: 32px; width: 100%; max-width: 450px; text-align: center; border: 1px solid #333; }
+        input { width: 100%; padding: 18px; margin: 20px 0; border-radius: 16px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1.1rem; text-align: center; }
+        .btn { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
         .hidden { display: none !important; }
+        #cat { width: 85%; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
     </style>
 </head>
 <body>
 
-<div id="onboarding">
-    <div class="setup-card">
-        <h2 id="setup-title">Hoş Geldin 🐾</h2>
-        <p id="setup-desc" style="color: #888;">API anahtarını girerek Pamuk'u uyandır.</p>
-        <input type="password" id="api-input" placeholder="Anahtarı buraya yapıştır...">
-        <button class="btn-main" onclick="processStep()">İlerle</button>
+<div id="setup">
+    <div class="card">
+        <h2 id="st-t">Hoş Geldin 🐾</h2>
+        <p id="st-d">Devam etmek için API anahtarını girin.</p>
+        <input type="password" id="st-i" placeholder="sk-... / AIza... / gsk_...">
+        <button class="btn" onclick="go()">İlerle</button>
     </div>
 </div>
 
-<div class="container">
-    <div class="character-pane">
-        <div id="cat-wrapper">
+<div class="app">
+    <div class="side-left">
+        <div id="cat">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path d="M45 55 L20 10 L70 45 Z" fill="#ffffff" />
-                <path d="M155 55 L180 10 L130 45 Z" fill="#ffffff" />
-                <circle cx="100" cy="105" r="80" fill="#ffffff" />
-                <circle cx="70" cy="95" r="12" fill="#1a1a1a" />
-                <circle cx="130" cy="95" r="12" fill="#1a1a1a" />
-                <path d="M96 115 Q100 122 104 115" fill="#ff99aa" />
-                <path id="mouth" d="M85 135 Q100 135 115 135" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
+                <circle cx="100" cy="110" r="85" fill="#ffffff" />
+                <path d="M45 55 L15 5 L65 40 Z" fill="#ffffff" />
+                <path d="M155 55 L185 5 L135 40 Z" fill="#ffffff" />
+                <circle cx="70" cy="100" r="10" fill="#1a1a1a" />
+                <circle cx="130" cy="100" r="10" fill="#1a1a1a" />
+                <path d="M96 120 Q100 128 104 120" fill="#ffb6c1" />
+                <path id="mouth" d="M85 140 Q100 140 115 140" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
             </svg>
         </div>
     </div>
-    <div class="chat-pane">
-        <div id="chat-window"></div>
-        <button id="mic-btn">🎤</button>
+    <div class="side-right">
+        <div id="chat"></div>
+        <button id="mic">🎤</button>
     </div>
 </div>
 
 <script>
-    // PWA Kayıt (Kritik: Mutlak Yol)
+    // KRİTİK: sw.js (artık sv.js değil) yolu GitHub Pages için dinamikleştirildi
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log("Servis Aktif"))
-                .catch(err => console.error("SW Hatası", err));
+            const swPath = './sw.js'; 
+            navigator.serviceWorker.register(swPath).then(() => console.log('v8 Aktif'));
         });
     }
 
-    let profile = JSON.parse(localStorage.getItem('p_v5_prof')) || {};
-    let apiKey = localStorage.getItem('p_v5_key');
-    let step = 0;
-    const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıfa gidiyorsun?"];
+    let p = JSON.parse(localStorage.getItem('p_v8_prof')) || {};
+    let key = localStorage.getItem('p_v8_key');
+    let s = 0;
+    const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıf?"];
     const ks = ["name", "age", "gender", "grade"];
 
     const synth = window.speechSynthesis;
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'tr-TR';
+    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.lang = 'tr-TR';
 
-    function processStep() {
-        const val = document.getElementById('api-input').value.trim();
+    function go() {
+        const val = document.getElementById('st-i').value.trim();
         if(!val) return;
-
-        if(!apiKey) {
-            localStorage.setItem('p_v5_key', val);
-            apiKey = val;
-            document.getElementById('setup-title').innerText = "Profil Oluştur";
-            document.getElementById('api-input').type = "text";
-        } else {
-            profile[ks[step]] = val;
-            step++;
-        }
-
-        document.getElementById('api-input').value = "";
-        if(step < qs.length) {
-            document.getElementById('api-input').placeholder = qs[step];
-            speak(qs[step]);
-        } else {
-            localStorage.setItem('p_v5_prof', JSON.stringify(profile));
-            document.getElementById('onboarding').classList.add('hidden');
-            greet();
-        }
+        if(!key) { localStorage.setItem('p_v8_key', val); key = val; document.getElementById('st-t').innerText = "Profil"; document.getElementById('st-i').type = "text"; }
+        else { p[ks[s]] = val; s++; }
+        document.getElementById('st-i').value = "";
+        if(s < qs.length) { document.getElementById('st-i').placeholder = qs[s]; speak(qs[s]); }
+        else { localStorage.setItem('p_v8_prof', JSON.stringify(p)); document.getElementById('setup').classList.add('hidden'); greet(); }
     }
 
     function speak(t) {
         const u = new SpeechSynthesisUtterance(t);
         u.lang = 'tr-TR';
-        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 135 Q100 160 115 135');
-        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 135 Q100 135 115 135');
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
+        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
         synth.speak(u);
     }
 
-    function greet() {
-        const m = `Selam ${profile.name}! Pamuk seninle çalışmaya hazır.`;
-        addB(m, 'ai'); speak(m);
-    }
+    function greet() { const m = `Selam ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`; add(m, 'ai'); speak(m); }
+    function add(t, c) { const w = document.getElementById('chat'); const b = document.createElement('div'); b.className = `bubble ${c}`; b.innerText = t; w.appendChild(b); w.scrollTop = w.scrollHeight; }
 
-    function addB(t, s) {
-        const w = document.getElementById('chat-window');
-        const b = document.createElement('div');
-        b.className = `bubble ${s}`;
-        b.innerText = t;
-        w.appendChild(b);
-        w.scrollTop = w.scrollHeight;
-    }
+    document.getElementById('mic').onclick = () => rec.start();
+    rec.onresult = (e) => { const t = e.results[0][0].transcript; add(t, 'user'); call(t); };
 
-    document.getElementById('mic-btn').onclick = () => recognition.start();
-    recognition.onresult = (e) => {
-        const t = e.results[0][0].transcript;
-        addB(t, 'user');
-        callAI(t);
-    };
-
-    async function callAI(text) {
-        let endpoint, body, headers;
-        
-        // OTOMATİK API DISPATCHER
-        if (apiKey.startsWith('sk-')) { // OpenAI
-            endpoint = 'https://api.openai.com/v1/chat/completions';
-            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-            body = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: `Sen ${profile.grade}. sınıf öğretmenisin.`}, {role: "user", content: text}] });
-        } else if (apiKey.startsWith('gsk_')) { // Groq
-            endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
-            body = JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: text}] });
-        } else if (apiKey.startsWith('AIza')) { // Gemini
-            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
-            headers = { 'Content-Type': 'application/json' };
-            body = JSON.stringify({ contents: [{ parts: [{ text: `Sen ilkokul öğretmeni Pamuk'sun. Seviye: ${profile.grade}. sınıf. Soru: ${text}` }] }] });
+    async function call(t) {
+        let url, b, h;
+        if (key.startsWith('sk-')) {
+            url = 'https://api.openai.com/v1/chat/completions';
+            h = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
+            b = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: `Sen sabırlı bir sınıf öğretmenisin. Seviye: ${p.grade}. sınıf.`}, {role: "user", content: t}] });
+        } else if (key.startsWith('gsk_')) {
+            url = 'https://api.groq.com/openai/v1/chat/completions';
+            h = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
+            b = JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: t}] });
+        } else if (key.startsWith('AIza')) {
+            url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
+            h = { 'Content-Type': 'application/json' };
+            b = JSON.stringify({ contents: [{ parts: [{ text: `Sen öğretmen Pamuk'sun. Seviye: ${p.grade}. sınıf. Soru: ${t}` }] }] });
         }
 
         try {
-            const res = await fetch(endpoint, { method: 'POST', headers, body });
+            const res = await fetch(url, { method: 'POST', headers: h, body: b });
             const data = await res.json();
-            let reply = "";
-            if (apiKey.startsWith('AIza')) reply = data.candidates[0].content.parts[0].text;
-            else reply = data.choices[0].message.content;
-            addB(reply, 'ai'); speak(reply);
-        } catch (err) {
-            addB("Bir hata oluştu. Anahtarı kontrol edin.", 'ai');
-        }
+            let r = key.startsWith('AIza') ? data.candidates[0].content.parts[0].text : data.choices[0].message.content;
+            add(r, 'ai'); speak(r);
+        } catch (e) { add("Bir sorun oluştu. Anahtarı kontrol et.", 'ai'); }
     }
 
-    window.onload = () => {
-        if(apiKey && profile.grade) {
-            document.getElementById('onboarding').classList.add('hidden');
-            greet();
-        }
-    };
+    window.onload = () => { if(key && p.grade) { document.getElementById('setup').classList.add('hidden'); greet(); } };
 </script>
 </body>
 </html>

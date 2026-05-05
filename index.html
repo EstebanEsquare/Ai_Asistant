@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pamuk - Yapay Zeka Eğitmenim</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --accent-color: #bb86fc;
+            --text-color: #e0e0e0;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sol Panel: Karakter */
+        .character-pane {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #2c2c2c 0%, #121212 100%);
+            border-right: 2px solid #333;
+        }
+
+        #cat-svg {
+            width: 80%;
+            height: auto;
+        }
+
+        /* Sağ Panel: Chat */
+        .chat-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #chat-window {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 15px;
+            background: var(--card-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 1.1rem;
+        }
+
+        .ai-bubble { background: #3700b3; align-self: flex-start; }
+        .user-bubble { background: var(--accent-color); color: #000; align-self: flex-end; }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            min-width: 60px;
+            min-height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-color);
+            color: #000;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        button:active { transform: scale(0.95); }
+
+        /* Onboarding Modal */
+        #onboarding {
+            position: fixed;
+            inset: 0;
+            background: #121212;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        input, select {
+            padding: 15px;
+            margin: 10px;
+            width: 80%;
+            max-width: 300px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="onboarding">
+    <h2 id="setup-title">Merhaba! Ben Pamuk.</h2>
+    <div id="step-1">
+        <p>Devam etmek için OpenAI API Anahtarını gir:</p>
+        <input type="password" id="api-key" placeholder="sk-...">
+        <br><button onclick="saveApiKey()">Tamam</button>
+    </div>
+    <div id="step-2" class="hidden">
+        <p id="onboarding-text"></p>
+        <input type="text" id="user-input-data" placeholder="...">
+        <br><button onclick="nextOnboardingStep()">İlerle</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="character-pane">
+        <svg id="cat-svg" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="80" fill="#f0f0f0" />
+            <circle cx="70" cy="80" r="10" fill="#000" id="eye-l" />
+            <circle cx="130" cy="80" r="10" fill="#000" id="eye-r" />
+            <path id="mouth" d="M 80 130 Q 100 140 120 130" stroke="#000" stroke-width="5" fill="transparent" />
+            <polygon points="30,40 60,60 20,80" fill="#f0f0f0" />
+            <polygon points="170,40 140,60 180,80" fill="#f0f0f0" />
+        </svg>
+    </div>
+    <div class="chat-pane">
+        <div id="chat-window"></div>
+        <div class="controls">
+            <button id="mic-btn">🎤</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let profile = JSON.parse(localStorage.getItem('pamuk_profile')) || {};
+    let apiKey = localStorage.getItem('pamuk_api_key');
+    let currentStep = 0;
+    const steps = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin ne?", "Kaçıncı sınıfa gidiyorsun?"];
+    const keys = ["name", "age", "gender", "grade"];
+
+    const synth = window.speechSynthesis;
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'tr-TR';
+
+    window.onload = () => {
+        if (!apiKey) {
+            document.getElementById('step-1').classList.remove('hidden');
+        } else if (!profile.grade) {
+            startOnboarding();
+        } else {
+            document.getElementById('onboarding').classList.add('hidden');
+            greetUser();
+        }
+    };
+
+    function saveApiKey() {
+        apiKey = document.getElementById('api-key').value;
+        if(apiKey) {
+            localStorage.setItem('pamuk_api_key', apiKey);
+            startOnboarding();
+        }
+    }
+
+    function startOnboarding() {
+        document.getElementById('step-1').classList.add('hidden');
+        document.getElementById('step-2').classList.remove('hidden');
+        askStep();
+    }
+
+    function askStep() {
+        document.getElementById('onboarding-text').innerText = steps[currentStep];
+        speak(steps[currentStep]);
+    }
+
+    function nextOnboardingStep() {
+        const val = document.getElementById('user-input-data').value;
+        profile[keys[currentStep]] = val;
+        document.getElementById('user-input-data').value = "";
+        currentStep++;
+        if(currentStep < steps.length) {
+            askStep();
+        } else {
+            localStorage.setItem('pamuk_profile', JSON.stringify(profile));
+            document.getElementById('onboarding').classList.add('hidden');
+            greetUser();
+        }
+    }
+
+    function speak(text) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'tr-TR';
+        utter.onstart = () => startMouthAnim();
+        utter.onend = () => stopMouthAnim();
+        synth.speak(utter);
+    }
+
+    function startMouthAnim() {
+        document.getElementById('mouth').setAttribute('d', 'M 80 130 Q 100 160 120 130');
+    }
+
+    function stopMouthAnim() {
+        document.getElementById('mouth').setAttribute('d', 'M 80 130 Q 100 140 120 130');
+    }
+
+    function greetUser() {
+        const msg = `Merhaba ${profile.name}! Ben Pamuk. Bugün ${profile.grade}. sınıf derslerine çalışmaya hazır mısın?`;
+        addChatBubble(msg, 'ai');
+        speak(msg);
+    }
+
+    function addChatBubble(text, sender) {
+        const win = document.getElementById('chat-window');
+        const b = document.createElement('div');
+        b.className = `bubble ${sender}-bubble`;
+        b.innerText = text;
+        win.appendChild(b);
+        win.scrollTop = win.scrollHeight;
+    }
+
+    document.getElementById('mic-btn').onclick = () => {
+        recognition.start();
+    };
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        addChatBubble(text, 'user');
+        getAIResponse(text);
+    };
+
+    async function getAIResponse(userText) {
+        // Burada gerçek bir API çağrısı yapılabilir. Şimdilik simülasyon:
+        const response = `Harika bir soru ${profile.name}! ${profile.grade}. sınıf müfredatına göre bu konuyu hemen açıklayabilirim.`;
+        addChatBubble(response, 'ai');
+        speak(response);
+    }
+</script>
+</body>
+</html>

@@ -5,93 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Pamuk AI</title>
+    <link rel="manifest" href="/manifest.json">
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #bb86fc; --text: #e0e0e0; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+        :root { --bg: #0f0f12; --card: #1c1c21; --accent: #c38fff; --text: #f0f0f5; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
         
         .container { display: flex; height: 100vh; width: 100vw; }
 
-        /* Sol Panel - Yeni Kedi Tasarımı */
+        /* Sol Panel - Karakter */
         .character-pane {
-            flex: 1; display: flex; justify-content: center; align-items: center;
-            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-            border-right: 1px solid #333;
+            flex: 1.2; display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(circle at center, #251b33 0%, #0f0f12 100%);
+            border-right: 1px solid #2d2d35;
         }
-        #cat-container { width: 70%; position: relative; }
-        .cat-svg { width: 100%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
+        #cat-wrapper { width: 80%; max-width: 350px; }
 
         /* Sağ Panel - Chat */
-        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #13131a; }
         #chat-window {
-            flex: 1; overflow-y: auto; background: var(--card); border-radius: 20px;
-            padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            flex: 1; overflow-y: auto; background: var(--card); border-radius: 24px;
+            padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px;
         }
-        .bubble { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 1rem; line-height: 1.4; }
-        .ai { background: #3700b3; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        .bubble { padding: 14px 18px; border-radius: 20px; max-width: 85%; font-size: 1rem; line-height: 1.5; }
+        .ai { background: #2a2a35; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
 
         #mic-btn {
-            width: 65px; height: 65px; border-radius: 50%; border: none;
-            background: var(--accent); font-size: 28px; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.4); margin: 0 auto;
+            width: 72px; height: 72px; border-radius: 50%; border: none;
+            background: var(--accent); font-size: 32px; cursor: pointer;
+            box-shadow: 0 8px 25px rgba(195, 143, 255, 0.3); margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* Onboarding */
+        /* Onboarding Modals */
         #onboarding {
-            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            position: fixed; inset: 0; background: var(--bg); z-index: 2000;
             display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px;
         }
+        .setup-card { background: var(--card); padding: 35px; border-radius: 28px; width: 100%; max-width: 450px; text-align: center; border: 1px solid #333; }
         input {
-            width: 100%; max-width: 300px; padding: 15px; margin: 15px 0;
-            border-radius: 12px; border: 2px solid var(--accent); background: transparent; color: #fff; text-align: center;
+            width: 100%; padding: 18px; margin: 20px 0; border-radius: 14px; border: 2px solid #3d3d4d;
+            background: #0a0a0c; color: #fff; font-size: 1.1rem; text-align: center;
         }
-        .btn { padding: 15px 40px; border-radius: 25px; border: none; background: var(--accent); font-weight: bold; }
+        input:focus { border-color: var(--accent); outline: none; }
+        .btn-main { width: 100%; min-height: 55px; border-radius: 14px; border: none; background: var(--accent); color: #000; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="onboarding">
-    <div id="setup-ui">
-        <h2>Hoş Geldin! 🐾</h2>
-        <p>Devam etmek için OpenAI API anahtarını gir:</p>
-        <input type="password" id="api-key" placeholder="sk-...">
-        <br><button class="btn" onclick="saveApiKey()">Başlayalım</button>
-    </div>
-    <div id="profile-ui" class="hidden">
-        <h2 id="q-text"></h2>
-        <input type="text" id="q-input" placeholder="Cevabın...">
-        <br><button class="btn" onclick="nextStep()">İleri</button>
+    <div id="modal-content" class="setup-card">
+        <h2 id="modal-title">Merhaba! 👋</h2>
+        <p id="modal-desc" style="color: #aaa;">Sistemi başlatmak için API anahtarını girin.</p>
+        <input type="password" id="main-input" placeholder="Anahtarı buraya yapıştır...">
+        <button class="btn-main" id="main-btn" onclick="handleLogic()">Devam Et</button>
     </div>
 </div>
 
 <div class="container">
     <div class="character-pane">
-        <div id="cat-container">
-            <svg class="cat-svg" viewBox="0 0 200 220">
-                <!-- Kulaklar -->
-                <path d="M40 60 L10 10 L60 40 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
-                <path d="M160 60 L190 10 L140 40 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
-                <path d="M45 55 L25 25 L55 45 Z" fill="#ffc0cb"/>
-                <path d="M155 55 L175 25 L145 45 Z" fill="#ffc0cb"/>
-                <!-- Kafa -->
-                <ellipse cx="100" cy="110" rx="85" ry="75" fill="#fff" stroke="#ccc" stroke-width="1"/>
-                <!-- Gözler -->
-                <circle cx="70" cy="100" r="10" fill="#000"/>
-                <circle cx="130" cy="100" r="10" fill="#000"/>
-                <circle cx="73" cy="97" r="3" fill="#fff"/>
-                <circle cx="133" cy="97" r="3" fill="#fff"/>
-                <!-- Burun ve Ağız -->
-                <path d="M95 125 L105 125 L100 132 Z" fill="#ffc0cb"/>
-                <path id="mouth" d="M85 145 Q100 145 115 145" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
-                <!-- Bıyıklar -->
-                <line x1="50" y1="125" x2="20" y2="120" stroke="#ccc" />
-                <line x1="50" y1="135" x2="20" y2="140" stroke="#ccc" />
-                <line x1="150" y1="125" x2="180" y2="120" stroke="#ccc" />
-                <line x1="150" y1="135" x2="180" y2="140" stroke="#ccc" />
+        <div id="cat-wrapper">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M45 55 L20 10 L70 45 Z" fill="#ffffff" />
+                <path d="M155 55 L180 10 L130 45 Z" fill="#ffffff" />
+                <circle cx="100" cy="105" r="80" fill="#ffffff" />
+                <circle cx="70" cy="95" r="10" fill="#1a1a1a" />
+                <circle cx="130" cy="95" r="10" fill="#1a1a1a" />
+                <path d="M96 115 Q100 122 104 115" fill="#ff99aa" />
+                <path id="mouth" d="M85 135 Q100 135 115 135" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
             </svg>
         </div>
     </div>
@@ -102,109 +87,126 @@
 </div>
 
 <script>
+    // PWA Kayıt Mantığı
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            window.location.reload();
-                        }
-                    };
-                };
-            });
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => console.log("PWA Kayıt Başarılı"))
+                .catch(err => console.log("PWA Hatası:", err));
         });
     }
 
-    let profile = JSON.parse(localStorage.getItem('p_prof')) || {};
-    let apiKey = localStorage.getItem('p_key');
+    let profile = JSON.parse(localStorage.getItem('p_v4_prof')) || {};
+    let apiKey = localStorage.getItem('p_v4_key');
     let step = 0;
     const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıfa gidiyorsun?"];
     const ks = ["name", "age", "gender", "grade"];
 
     const synth = window.speechSynthesis;
-    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const rec = new Speech();
-    rec.lang = 'tr-TR';
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'tr-TR';
 
-    function saveApiKey() {
-        const val = document.getElementById('api-key').value;
-        if(val.startsWith('sk-')) {
-            localStorage.setItem('p_key', val);
-            apiKey = val;
-            startProfile();
-        } else {
-            alert("Lütfen geçerli bir OpenAI anahtarı girin.");
-        }
-    }
-
-    function startProfile() {
-        document.getElementById('setup-ui').classList.add('hidden');
-        document.getElementById('profile-ui').classList.remove('hidden');
-        ask();
-    }
-
-    function ask() {
-        document.getElementById('q-text').innerText = qs[step];
-        speak(qs[step]);
-    }
-
-    function nextStep() {
-        const val = document.getElementById('q-input').value;
+    function handleLogic() {
+        const val = document.getElementById('main-input').value.trim();
         if(!val) return;
-        profile[ks[step]] = val;
-        document.getElementById('q-input').value = "";
-        step++;
-        if(step < qs.length) ask();
-        else {
-            localStorage.setItem('p_prof', JSON.stringify(profile));
-            document.getElementById('onboarding').classList.add('hidden');
-            greet();
+
+        if (!apiKey) {
+            localStorage.setItem('p_v4_key', val);
+            apiKey = val;
+            setupOnboardingUI();
+        } else {
+            profile[ks[step]] = val;
+            document.getElementById('main-input').value = "";
+            step++;
+            if (step < qs.length) {
+                updateUI();
+            } else {
+                localStorage.setItem('p_v4_prof', JSON.stringify(profile));
+                document.getElementById('onboarding').classList.add('hidden');
+                greet();
+            }
         }
+    }
+
+    function setupOnboardingUI() {
+        document.getElementById('modal-title').innerText = "Profil Oluştur";
+        document.getElementById('modal-desc').innerText = "Sana daha iyi yardımcı olabilmem için:";
+        document.getElementById('main-input').type = "text";
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('main-input').placeholder = qs[step];
+        speak(qs[step]);
     }
 
     function speak(t) {
         const u = new SpeechSynthesisUtterance(t);
         u.lang = 'tr-TR';
-        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 145 Q100 165 115 145');
-        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 145 Q100 145 115 145');
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 135 Q100 160 115 135');
+        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 135 Q100 135 115 135');
         synth.speak(u);
     }
 
     function greet() {
-        const m = `Hoş geldin ${profile.name}! Pamuk seninle çalışmaya hazır.`;
+        const m = `Selam ${profile.name}! Ben Pamuk. Bugün ${profile.grade}. sınıf derslerine bakmaya ne dersin?`;
         addB(m, 'ai'); speak(m);
     }
 
     function addB(t, s) {
         const w = document.getElementById('chat-window');
-        const d = document.createElement('div');
-        d.className = `bubble ${s}`;
-        d.innerText = t;
-        w.appendChild(d);
+        const b = document.createElement('div');
+        b.className = `bubble ${s}`;
+        b.innerText = t;
+        w.appendChild(b);
         w.scrollTop = w.scrollHeight;
     }
 
-    document.getElementById('mic-btn').onclick = () => rec.start();
-    rec.onresult = (e) => {
+    document.getElementById('mic-btn').onclick = () => recognition.start();
+    recognition.onresult = (e) => {
         const t = e.results[0][0].transcript;
         addB(t, 'user');
         processAI(t);
     };
 
     async function processAI(userText) {
-        // OpenAI Fetch mantığı buraya gelecek. Şimdilik hızlı yanıt:
-        const r = `${profile.grade}. sınıf müfredatına göre bu harika bir soru!`;
-        addB(r, 'ai'); speak(r);
+        let endpoint, body, headers;
+        
+        // OTOMATİK API TANIMA (Dispatcher)
+        if (apiKey.startsWith('sk-')) { // OpenAI
+            endpoint = 'https://api.openai.com/v1/chat/completions';
+            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+            body = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: `Sen sabırlı bir sınıf öğretmenisin. Seviye: ${profile.grade}. sınıf.`}, {role: "user", content: userText}] });
+        } else if (apiKey.startsWith('gsk_')) { // Groq
+            endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
+            body = JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: userText}] });
+        } else if (apiKey.startsWith('AIza')) { // Gemini
+            endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+            headers = { 'Content-Type': 'application/json' };
+            body = JSON.stringify({ contents: [{ parts: [{ text: `Sen ilkokul öğretmeni Pamuk'sun. Öğrenci ${profile.name}, ${profile.grade}. sınıfta. Soru: ${userText}` }] }] });
+        }
+
+        try {
+            const res = await fetch(endpoint, { method: 'POST', headers, body });
+            const data = await res.json();
+            let reply = "";
+            
+            if (apiKey.startsWith('AIza')) reply = data.candidates[0].content.parts[0].text;
+            else reply = data.choices[0].message.content;
+
+            addB(reply, 'ai'); speak(reply);
+        } catch (e) {
+            addB("Bir sorun oluştu. API anahtarını kontrol eder misin?", 'ai');
+        }
     }
 
     window.onload = () => {
-        if(!apiKey) return;
-        if(!profile.grade) startProfile();
-        else {
+        if(apiKey && profile.grade) {
             document.getElementById('onboarding').classList.add('hidden');
             greet();
+        } else if (apiKey) {
+            setupOnboardingUI();
         }
     };
 </script>

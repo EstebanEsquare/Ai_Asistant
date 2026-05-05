@@ -1,10 +1,11 @@
 {
-  "short_name": "Pamuk",
   "name": "Pamuk: Yapay Zeka Eğitmenim",
-  "id": "/?source=pwa",
+  "short_name": "Pamuk",
+  "id": "/index.html",
   "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#121212",
   "theme_color": "#bb86fc",
   "orientation": "landscape",
@@ -21,7 +22,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "scope": "/",
-  "description": "Çocuklar için sesli interaktif eğitim asistanı."
+  ]
 }

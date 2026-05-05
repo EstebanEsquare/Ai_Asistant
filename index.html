@@ -12,46 +12,28 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
         
-        .app-shell { display: flex; height: 100vh; width: 100vw; }
+        .app-shell { display: flex; height: 100vh; width: 100vw; position: relative; }
+        
+        /* Ayarlar Butonu */
+        .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* Karakter Paneli */
-        .char-pane {
-            flex: 1.2; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%);
-            border-right: 1px solid #2d2d35;
-        }
+        .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
         #cat-svg { width: 85%; max-width: 380px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
 
-        /* Sohbet Paneli */
         .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
-        #chat-window {
-            flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px;
-            padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px;
-            box-shadow: inset 0 4px 30px rgba(0,0,0,0.6);
-        }
+        #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
         .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
         .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
         .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
 
-        .btn-mic {
-            width: 76px; height: 76px; border-radius: 50%; border: none;
-            background: var(--accent); font-size: 34px; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); margin: 0 auto;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
 
-        /* Onboarding */
-        #onboarding {
-            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
-            display: flex; justify-content: center; align-items: center; padding: 20px;
-        }
-        .setup-card { background: var(--card); padding: 35px; border-radius: 32px; width: 100%; max-width: 450px; text-align: center; border: 1px solid #333; }
-        input {
-            width: 100%; padding: 18px; margin: 20px 0; border-radius: 16px; border: 2px solid #3d3d4d;
-            background: #050507; color: #fff; font-size: 1.1rem; text-align: center;
-        }
-        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
-
+        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .setup-card { background: var(--card); padding: 35px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; }
+        input { width: 100%; padding: 18px; margin: 8px 0; border-radius: 16px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1.1rem; text-align: center; }
+        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .btn-test { background: #2d2d35; color: white; margin-bottom: 10px; font-size: 0.9rem; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -60,13 +42,23 @@
 <div id="onboarding">
     <div class="setup-card">
         <h2 id="st-title">Merhaba! 👋</h2>
-        <p id="st-desc" style="color: #999;">Sistemi başlatmak için API anahtarını girin.</p>
-        <input type="password" id="st-input" placeholder="sk-... / AIza... / gsk_...">
-        <button class="btn-action" onclick="handleStep()">Devam Et</button>
+        <div id="api-panel">
+            <p id="st-desc" style="color: #999;">Lütfen API ayarlarını yapılandırın.</p>
+            <input type="password" id="key-primary" placeholder="Ana API Anahtarı (Gemini/OpenAI)">
+            <input type="password" id="key-backup" placeholder="Yedek API Anahtarı (Opsiyonel)">
+            <button class="btn-action btn-test" onclick="testCurrentKey()">Seçili Anahtarı Test Et</button>
+            <button class="btn-action" onclick="saveKeys()">Kaydet ve Devam Et</button>
+        </div>
+        <div id="profile-panel" class="hidden">
+            <p id="q-text" style="color: var(--accent); font-weight: bold;"></p>
+            <input type="text" id="q-input" placeholder="Cevabınız...">
+            <button class="btn-action" onclick="nextProfileStep()">İlerle</button>
+        </div>
     </div>
 </div>
 
 <div class="app-shell">
+    <button class="settings-trigger" onclick="openSettings()">⚙️</button>
     <div class="char-pane">
         <div id="cat-svg">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
@@ -87,18 +79,16 @@
 </div>
 
 <script>
-    // PWA Kaydı - Dinamik Yol Düzeltmesi
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log("PWA Kayıtlı"))
-                .catch(err => console.error("PWA Hatası:", err));
+            navigator.serviceWorker.register('./sw.js').then(() => console.log("PWA Aktif"));
         });
     }
 
-    let p = JSON.parse(localStorage.getItem('p_v9_prof')) || {};
-    let key = localStorage.getItem('p_v9_key');
-    let s = 0;
+    let p = JSON.parse(localStorage.getItem('p_v11_prof')) || {};
+    let keyPrimary = localStorage.getItem('p_v11_key1');
+    let keyBackup = localStorage.getItem('p_v11_key2');
+    let step = 0;
     const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıfa gidiyorsun?"];
     const ks = ["name", "age", "gender", "grade"];
 
@@ -106,28 +96,68 @@
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = 'tr-TR';
 
-    function handleStep() {
-        const val = document.getElementById('st-input').value.trim();
+    async function testCurrentKey() {
+        const testKey = document.getElementById('key-primary').value.trim();
+        if(!testKey) return alert("Lütfen önce bir anahtar girin.");
+        
+        alert("Bağlantı test ediliyor, lütfen bekleyin...");
+        const result = await validateKey(testKey);
+        if(result) alert("Başarılı! API anahtarı çalışıyor.");
+        else alert("Hata! Anahtar geçersiz veya model erişimi kapalı.");
+    }
+
+    async function validateKey(k) {
+        // Yeni preview model ismi ile test
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k}`;
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: "hi" }] }] })
+            });
+            return res.ok;
+        } catch(e) { return false; }
+    }
+
+    function saveKeys() {
+        keyPrimary = document.getElementById('key-primary').value.trim();
+        keyBackup = document.getElementById('key-backup').value.trim();
+        if(!keyPrimary) return alert("Ana API anahtarı gereklidir.");
+        
+        localStorage.setItem('p_v11_key1', keyPrimary);
+        localStorage.setItem('p_v11_key2', keyBackup);
+        
+        document.getElementById('api-panel').classList.add('hidden');
+        document.getElementById('profile-panel').classList.remove('hidden');
+        askProfile();
+    }
+
+    function askProfile() {
+        document.getElementById('q-text').innerText = qs[step];
+        speak(qs[step]);
+    }
+
+    function nextProfileStep() {
+        const val = document.getElementById('q-input').value.trim();
         if(!val) return;
-
-        if(!key) {
-            localStorage.setItem('p_v9_key', val);
-            key = val;
-            document.getElementById('st-title').innerText = "Profil Oluştur";
-            document.getElementById('st-input').type = "text";
-        } else {
-            p[ks[s]] = val;
-            s++;
-        }
-
-        document.getElementById('st-input').value = "";
-        if(s < qs.length) {
-            document.getElementById('st-input').placeholder = qs[s];
-            speak(qs[s]);
-        } else {
-            localStorage.setItem('p_v9_prof', JSON.stringify(p));
+        p[ks[step]] = val;
+        document.getElementById('q-input').value = "";
+        step++;
+        if(step < qs.length) askProfile();
+        else {
+            localStorage.setItem('p_v11_prof', JSON.stringify(p));
             document.getElementById('onboarding').classList.add('hidden');
             greet();
+        }
+    }
+
+    function openSettings() {
+        if(confirm("API Ayarlarını değiştirmek istiyor musunuz? Mevcut profiliniz korunacaktır.")) {
+            document.getElementById('onboarding').classList.remove('hidden');
+            document.getElementById('api-panel').classList.remove('hidden');
+            document.getElementById('profile-panel').classList.add('hidden');
+            document.getElementById('key-primary').value = keyPrimary || "";
+            document.getElementById('key-backup').value = keyBackup || "";
         }
     }
 
@@ -140,7 +170,7 @@
     }
 
     function greet() {
-        const m = `Merhaba ${p.name}! Bugün ${p.grade}. sınıf derslerine çalışalım mı?`;
+        const m = `Merhaba ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`;
         addB(m, 'ai'); speak(m);
     }
 
@@ -160,33 +190,42 @@
         callAI(t);
     };
 
-    async function callAI(text) {
+    async function callAI(text, isBackup = false) {
+        const activeKey = isBackup ? keyBackup : keyPrimary;
+        if(!activeKey) return;
+
         let url, body, headers;
-        if (key.startsWith('sk-')) {
+        if (activeKey.startsWith('sk-')) {
             url = 'https://api.openai.com/v1/chat/completions';
-            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
-            body = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: `Sen sabırlı bir sınıf öğretmenisin.`}, {role: "user", content: text}] });
-        } else if (key.startsWith('gsk_')) {
-            url = 'https://api.groq.com/openai/v1/chat/completions';
-            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
-            body = JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: text}] });
-        } else if (key.startsWith('AIza')) {
-            url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
+            headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeKey}` };
+            body = JSON.stringify({ model: "gpt-3.5-turbo", messages: [{role: "system", content: "Sen şefkatli bir ilkokul öğretmenisin."}, {role: "user", content: text}] });
+        } else if (activeKey.startsWith('AIza')) {
+            // gemini-3.1-flash-lite-preview modeli entegrasyonu
+            url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${activeKey}`;
             headers = { 'Content-Type': 'application/json' };
-            body = JSON.stringify({ contents: [{ parts: [{ text: `Sen öğretmen Pamuk'sun. Öğrenci: ${p.name}, Sınıf: ${p.grade}. Soru: ${text}` }] }] });
+            body = JSON.stringify({ contents: [{ parts: [{ text: `Sen öğretmen Pamuk'sun. Karşındaki çocuk: ${p.name}, Sınıf: ${p.grade}. Soru: ${text}` }] }] });
         }
 
         try {
             const res = await fetch(url, { method: 'POST', headers, body });
             const data = await res.json();
-            let reply = key.startsWith('AIza') ? data.candidates[0].content.parts[0].text : data.choices[0].message.content;
+            
+            if(!res.ok) throw new Error(data.error?.message || "API Erişilemiyor");
+            
+            let reply = activeKey.startsWith('AIza') ? data.candidates[0].content.parts[0].text : data.choices[0].message.content;
             addB(reply, 'ai'); speak(reply);
         } catch (e) {
-            addB("Bir hata oluştu, lütfen API anahtarını kontrol et.", 'ai');
+            console.error(e);
+            if(!isBackup && keyBackup) {
+                addB("Ana anahtarda sorun oluştu, yedeğe bağlanıyorum...", 'ai');
+                callAI(text, true);
+            } else {
+                addB(`Hata oluştu: ${e.message}. Lütfen Ayarlar (⚙️) kısmından anahtarınızı kontrol edin.`, 'ai');
+            }
         }
     }
 
-    window.onload = () => { if(key && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); } };
+    window.onload = () => { if(keyPrimary && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); } };
 </script>
 </body>
 </html>

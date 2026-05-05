@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pamuk-v9';
+const CACHE_NAME = 'pamuk-v11';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -18,8 +18,6 @@ self.addEventListener('activate', (e) => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
-    // ✅ FIX 1: clients.claim() olmadan SW yeni açılan sayfayı kontrol edemez.
-    // Ana ekrandan ilk açılışta boş/donuk ekran bundan kaynaklanıyordu.
     }).then(() => self.clients.claim())
   );
 });

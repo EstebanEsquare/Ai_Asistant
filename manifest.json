@@ -1,0 +1,17 @@
+{
+  "name": "Pamuk: Yapay Zeka Eğitmenim",
+  "short_name": "Pamuk",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#bb86fc",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

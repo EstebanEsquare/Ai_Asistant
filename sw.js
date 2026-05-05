@@ -1,7 +1,8 @@
-const CACHE_NAME = 'pamuk-v4';
+const CACHE_NAME = 'pamuk-v8';
 const ASSETS = [
-  '/index.html',
-  '/manifest.json'
+  './index.html',
+  './manifest.json',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
@@ -22,7 +23,6 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Önce ağı dene, başarısız olursa önbelleğe bak
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );

@@ -2,242 +2,209 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk - Yapay Zeka Eğitmenim</title>
+    <title>Pamuk</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
     <style>
-        :root {
-            --bg-color: #121212;
-            --card-color: #1e1e1e;
-            --accent-color: #bb86fc;
-            --text-color: #e0e0e0;
-        }
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #bb86fc; --text: #e0e0e0; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; overflow: hidden; }
+        
+        .container { display: flex; height: 100vh; width: 100vw; }
 
-        body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
-
-        .container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-        }
-
+        /* Sol Panel - Yeni Kedi Tasarımı */
         .character-pane {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle, #2c2c2c 0%, #121212 100%);
-            border-right: 2px solid #333;
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border-right: 1px solid #333;
         }
+        #cat-container { width: 70%; position: relative; }
+        .cat-svg { width: 100%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
 
-        #cat-svg { width: 70%; height: auto; transition: transform 0.3s ease; }
-
-        .chat-pane {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
+        /* Sağ Panel - Chat */
+        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
         #chat-window {
-            flex: 1;
-            overflow-y: auto;
-            border-radius: 15px;
-            background: var(--card-color);
-            padding: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex: 1; overflow-y: auto; background: var(--card); border-radius: 20px;
+            padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
-
-        .bubble {
-            padding: 12px 18px;
-            border-radius: 18px;
-            max-width: 80%;
-            word-wrap: break-word;
-            font-size: 1.1rem;
-            line-height: 1.4;
-        }
-
-        .ai-bubble { background: #3700b3; align-self: flex-start; }
-        .user-bubble { background: var(--accent-color); color: #000; align-self: flex-end; }
-
-        .controls { display: flex; justify-content: center; padding-bottom: 10px; }
+        .bubble { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 1rem; line-height: 1.4; }
+        .ai { background: #3700b3; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
 
         #mic-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: none;
-            background: var(--accent-color);
-            color: #000;
-            cursor: pointer;
-            font-size: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.4);
+            width: 65px; height: 65px; border-radius: 50%; border: none;
+            background: var(--accent); font-size: 28px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.4); margin: 0 auto;
         }
 
+        /* Onboarding */
         #onboarding {
-            position: fixed; inset: 0; background: #121212; z-index: 100;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 20px; text-align: center;
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px;
         }
-
         input {
-            padding: 15px; margin: 15px; width: 80%; max-width: 350px;
-            border-radius: 10px; border: 2px solid var(--accent-color);
-            background: transparent; color: white; font-size: 1.1rem;
+            width: 100%; max-width: 300px; padding: 15px; margin: 15px 0;
+            border-radius: 12px; border: 2px solid var(--accent); background: transparent; color: #fff; text-align: center;
         }
-
-        .btn-primary {
-            padding: 15px 40px; border-radius: 30px; border: none;
-            background: var(--accent-color); color: #000; font-weight: bold; cursor: pointer;
-        }
-
+        .btn { padding: 15px 40px; border-radius: 25px; border: none; background: var(--accent); font-weight: bold; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="onboarding">
-    <div id="step-1">
-        <h2>Hoş Geldin! Ben Pamuk.</h2>
-        <p>Lütfen OpenAI API Anahtarını gir:</p>
+    <div id="setup-ui">
+        <h2>Hoş Geldin! 🐾</h2>
+        <p>Devam etmek için OpenAI API anahtarını gir:</p>
         <input type="password" id="api-key" placeholder="sk-...">
-        <br><button class="btn-primary" onclick="saveApiKey()">Devam Et</button>
+        <br><button class="btn" onclick="saveApiKey()">Başlayalım</button>
     </div>
-    <div id="step-2" class="hidden">
-        <h2 id="onboarding-text"></h2>
-        <input type="text" id="user-input-data" placeholder="Cevabın...">
-        <br><button class="btn-primary" onclick="nextOnboardingStep()">İleri</button>
+    <div id="profile-ui" class="hidden">
+        <h2 id="q-text"></h2>
+        <input type="text" id="q-input" placeholder="Cevabın...">
+        <br><button class="btn" onclick="nextStep()">İleri</button>
     </div>
 </div>
 
 <div class="container">
     <div class="character-pane">
-        <svg id="cat-svg" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="80" fill="#f0f0f0" />
-            <circle cx="70" cy="80" r="10" fill="#000" />
-            <circle cx="130" cy="80" r="10" fill="#000" />
-            <path id="mouth" d="M 80 130 Q 100 140 120 130" stroke="#000" stroke-width="5" fill="transparent" />
-            <polygon points="30,40 60,60 20,80" fill="#f0f0f0" />
-            <polygon points="170,40 140,60 180,80" fill="#f0f0f0" />
-        </svg>
+        <div id="cat-container">
+            <svg class="cat-svg" viewBox="0 0 200 220">
+                <!-- Kulaklar -->
+                <path d="M40 60 L10 10 L60 40 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
+                <path d="M160 60 L190 10 L140 40 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
+                <path d="M45 55 L25 25 L55 45 Z" fill="#ffc0cb"/>
+                <path d="M155 55 L175 25 L145 45 Z" fill="#ffc0cb"/>
+                <!-- Kafa -->
+                <ellipse cx="100" cy="110" rx="85" ry="75" fill="#fff" stroke="#ccc" stroke-width="1"/>
+                <!-- Gözler -->
+                <circle cx="70" cy="100" r="10" fill="#000"/>
+                <circle cx="130" cy="100" r="10" fill="#000"/>
+                <circle cx="73" cy="97" r="3" fill="#fff"/>
+                <circle cx="133" cy="97" r="3" fill="#fff"/>
+                <!-- Burun ve Ağız -->
+                <path d="M95 125 L105 125 L100 132 Z" fill="#ffc0cb"/>
+                <path id="mouth" d="M85 145 Q100 145 115 145" stroke="#000" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <!-- Bıyıklar -->
+                <line x1="50" y1="125" x2="20" y2="120" stroke="#ccc" />
+                <line x1="50" y1="135" x2="20" y2="140" stroke="#ccc" />
+                <line x1="150" y1="125" x2="180" y2="120" stroke="#ccc" />
+                <line x1="150" y1="135" x2="180" y2="140" stroke="#ccc" />
+            </svg>
+        </div>
     </div>
     <div class="chat-pane">
         <div id="chat-window"></div>
-        <div class="controls">
-            <button id="mic-btn">🎤</button>
-        </div>
+        <button id="mic-btn">🎤</button>
     </div>
 </div>
 
 <script>
-    // Service Worker Kaydı
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW Kayıt Başarılı'))
-                .catch(err => console.log('SW Kayıt Hatası:', err));
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
+                    };
+                };
+            });
         });
     }
 
-    let profile = JSON.parse(localStorage.getItem('pamuk_profile')) || {};
-    let apiKey = localStorage.getItem('pamuk_api_key');
-    let currentStep = 0;
-    const steps = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin ne?", "Kaçıncı sınıfa gidiyorsun?"];
-    const keys = ["name", "age", "gender", "grade"];
+    let profile = JSON.parse(localStorage.getItem('p_prof')) || {};
+    let apiKey = localStorage.getItem('p_key');
+    let step = 0;
+    const qs = ["Adın ne?", "Kaç yaşındasın?", "Cinsiyetin?", "Kaçıncı sınıfa gidiyorsun?"];
+    const ks = ["name", "age", "gender", "grade"];
 
     const synth = window.speechSynthesis;
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'tr-TR';
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new Speech();
+    rec.lang = 'tr-TR';
 
     function saveApiKey() {
-        const key = document.getElementById('api-key').value;
-        if(key) {
-            localStorage.setItem('pamuk_api_key', key);
-            apiKey = key;
-            startOnboarding();
-        }
-    }
-
-    function startOnboarding() {
-        document.getElementById('step-1').classList.add('hidden');
-        document.getElementById('step-2').classList.remove('hidden');
-        askStep();
-    }
-
-    function askStep() {
-        document.getElementById('onboarding-text').innerText = steps[currentStep];
-        speak(steps[currentStep]);
-    }
-
-    function nextOnboardingStep() {
-        const val = document.getElementById('user-input-data').value;
-        if(!val) return;
-        profile[keys[currentStep]] = val;
-        document.getElementById('user-input-data').value = "";
-        currentStep++;
-        if(currentStep < steps.length) {
-            askStep();
+        const val = document.getElementById('api-key').value;
+        if(val.startsWith('sk-')) {
+            localStorage.setItem('p_key', val);
+            apiKey = val;
+            startProfile();
         } else {
-            localStorage.setItem('pamuk_profile', JSON.stringify(profile));
-            document.getElementById('onboarding').classList.add('hidden');
-            greetUser();
+            alert("Lütfen geçerli bir OpenAI anahtarı girin.");
         }
     }
 
-    function speak(text) {
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'tr-TR';
-        utter.onstart = () => document.getElementById('mouth').setAttribute('d', 'M 80 130 Q 100 160 120 130');
-        utter.onend = () => document.getElementById('mouth').setAttribute('d', 'M 80 130 Q 100 140 120 130');
-        synth.speak(utter);
+    function startProfile() {
+        document.getElementById('setup-ui').classList.add('hidden');
+        document.getElementById('profile-ui').classList.remove('hidden');
+        ask();
     }
 
-    function greetUser() {
-        const msg = `Hoş geldin ${profile.name}! Bugün hangi dersi çalışalım?`;
-        addChatBubble(msg, 'ai');
-        speak(msg);
+    function ask() {
+        document.getElementById('q-text').innerText = qs[step];
+        speak(qs[step]);
     }
 
-    function addChatBubble(text, sender) {
-        const win = document.getElementById('chat-window');
-        const b = document.createElement('div');
-        b.className = `bubble ${sender}-bubble`;
-        b.innerText = text;
-        win.appendChild(b);
-        win.scrollTop = win.scrollHeight;
+    function nextStep() {
+        const val = document.getElementById('q-input').value;
+        if(!val) return;
+        profile[ks[step]] = val;
+        document.getElementById('q-input').value = "";
+        step++;
+        if(step < qs.length) ask();
+        else {
+            localStorage.setItem('p_prof', JSON.stringify(profile));
+            document.getElementById('onboarding').classList.add('hidden');
+            greet();
+        }
     }
 
-    document.getElementById('mic-btn').onclick = () => recognition.start();
-    recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        addChatBubble(text, 'user');
-        speak("Harika bir soru! Hemen inceliyorum.");
+    function speak(t) {
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'tr-TR';
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 145 Q100 165 115 145');
+        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 145 Q100 145 115 145');
+        synth.speak(u);
+    }
+
+    function greet() {
+        const m = `Hoş geldin ${profile.name}! Pamuk seninle çalışmaya hazır.`;
+        addB(m, 'ai'); speak(m);
+    }
+
+    function addB(t, s) {
+        const w = document.getElementById('chat-window');
+        const d = document.createElement('div');
+        d.className = `bubble ${s}`;
+        d.innerText = t;
+        w.appendChild(d);
+        w.scrollTop = w.scrollHeight;
+    }
+
+    document.getElementById('mic-btn').onclick = () => rec.start();
+    rec.onresult = (e) => {
+        const t = e.results[0][0].transcript;
+        addB(t, 'user');
+        processAI(t);
     };
 
+    async function processAI(userText) {
+        // OpenAI Fetch mantığı buraya gelecek. Şimdilik hızlı yanıt:
+        const r = `${profile.grade}. sınıf müfredatına göre bu harika bir soru!`;
+        addB(r, 'ai'); speak(r);
+    }
+
     window.onload = () => {
-        if (!apiKey) {
-            document.getElementById('step-1').classList.remove('hidden');
-        } else if (!profile.grade) {
-            startOnboarding();
-        } else {
+        if(!apiKey) return;
+        if(!profile.grade) startProfile();
+        else {
             document.getElementById('onboarding').classList.add('hidden');
-            greetUser();
+            greet();
         }
     };
 </script>

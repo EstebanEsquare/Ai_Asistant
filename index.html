@@ -2,1009 +2,236 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk Öğretmen v14</title>
-    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelişmiş AI Asistan & Test Paneli</title>
     <style>
         :root {
-            --bg: #0a0a0e;
-            --card: #13131c;
-            --accent: #c38fff;
-            --accent2: #7eb8ff;
-            --text: #eeeef5;
-            --border: #2a2a38;
-            --correct: #4ade80;
-            --wrong: #f87171;
+            --primary: #4285f4;
+            --bg: #f8f9fa;
+            --panel-bg: #ffffff;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
 
-        /* ===== APP SHELL ===== */
-        .app-shell {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg);
+        }
+
+        /* Sol Taraf: Sohbet Geçmişi */
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+
+        /* Sağ Taraf: Test Paneli */
+        #quiz-panel {
+            width: 400px;
+            background: var(--panel-bg);
+            padding: 30px;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .question-box {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .options-container {
             display: grid;
-            grid-template-columns: 220px 1fr 260px;
-            height: 100dvh;
-            width: 100vw;
-            overflow: hidden;
+            gap: 15px;
         }
 
-        @media (max-width: 820px) {
-            .app-shell {
-                grid-template-columns: 150px 1fr;
-                grid-template-rows: 1fr 220px;
-            }
-            .char-pane { grid-column: 1; grid-row: 1; }
-            .chat-pane { grid-column: 2; grid-row: 1; border-right: none; }
-            .quiz-pane {
-                grid-column: 1 / -1;
-                grid-row: 2;
-                flex-direction: row;
-                align-items: stretch;
-                gap: 10px;
-                padding: 10px 14px;
-                border-top: 1px solid var(--border);
-                overflow-x: auto;
-            }
-            .quiz-main { display: flex; flex: 1; gap: 8px; }
-            .quiz-q { font-size: 0.8rem; min-height: unset; padding: 10px 12px; flex: 0 0 200px; }
-            .quiz-opts { flex-direction: row; flex-wrap: wrap; flex: 1; }
-            .quiz-opt-btn { flex: 1 1 45%; padding: 10px 8px; font-size: 0.78rem; }
-            .quiz-side { display: flex; flex-direction: column; gap: 8px; flex: 0 0 130px; }
-            .btn-new-q { margin-top: 0; }
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            text-align: left;
         }
 
-        @media (max-width: 540px) {
-            .app-shell {
-                grid-template-columns: 110px 1fr;
-                grid-template-rows: 1fr 260px;
-            }
-            .quiz-q { flex: 0 0 160px; }
+        .option-btn:hover {
+            border-color: var(--primary);
+            background: #e8f0fe;
         }
 
-        /* ===== SETTINGS TRIGGER ===== */
-        .settings-trigger {
-            position: fixed; top: 12px; right: 12px; z-index: 200;
-            background: rgba(255,255,255,0.07); border: 1px solid var(--border);
-            border-radius: 50%; width: 42px; height: 42px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 18px; color: var(--accent); backdrop-filter: blur(10px);
-            transition: background 0.2s;
-        }
-        .settings-trigger:hover { background: rgba(195,143,255,0.15); }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; }
 
-        /* ===== CHAR PANE ===== */
-        .char-pane {
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            background: radial-gradient(ellipse at center, #1a1730 0%, #0a0a0e 100%);
-            border-right: 1px solid var(--border);
-            padding: 16px 12px; gap: 14px;
-            overflow: hidden;
-        }
-        #cat-svg { width: 90%; max-width: 200px; filter: drop-shadow(0 0 24px rgba(195,143,255,0.3)); }
-
-        .status-orb {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #333; transition: all 0.3s;
-        }
-        .status-orb.listening {
-            background: #4ade80;
-            box-shadow: 0 0 0 4px rgba(74,222,128,0.2);
-            animation: orb-pulse 1.2s ease-in-out infinite;
-        }
-        .status-orb.speaking {
-            background: var(--accent);
-            box-shadow: 0 0 0 4px rgba(195,143,255,0.25);
-            animation: orb-pulse 0.8s ease-in-out infinite;
-        }
-        @keyframes orb-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.7; }
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: #333;
+            color: white;
+            font-size: 0.9rem;
         }
 
-        /* ===== CHAT PANE ===== */
-        .chat-pane {
-            display: flex; flex-direction: column;
-            padding: 14px 14px 14px 14px;
-            background: #0d0d14;
-            border-right: 1px solid var(--border);
-            overflow: hidden;
-        }
-        #chat-window {
-            flex: 1; overflow-y: auto;
-            background: var(--card); border-radius: 22px;
-            padding: 14px; margin-bottom: 12px;
-            display: flex; flex-direction: column; gap: 10px;
-            box-shadow: inset 0 2px 20px rgba(0,0,0,0.5);
-            scrollbar-width: thin; scrollbar-color: #2a2a38 transparent;
-        }
-        .bubble {
-            padding: 11px 15px; border-radius: 18px;
-            max-width: 88%; font-size: 0.9rem; line-height: 1.55;
-            word-break: break-word;
-        }
-        .ai {
-            background: #1e1e2e; align-self: flex-start;
-            border-bottom-left-radius: 4px; border: 1px solid var(--border);
-            color: var(--text);
-        }
-        .user {
-            background: var(--accent); color: #1a0030;
-            align-self: flex-end; border-bottom-right-radius: 4px;
-            font-weight: 600;
-        }
-        .sys {
-            background: transparent; color: #666;
-            align-self: center; font-size: 0.75rem;
-            border: 1px dashed #2a2a38; padding: 6px 12px; border-radius: 20px;
-        }
-
-        .chat-controls { display: flex; align-items: center; justify-content: center; }
-        .btn-mic {
-            width: 64px; height: 64px; border-radius: 50%; border: none;
-            background: var(--accent); font-size: 28px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 6px 22px rgba(195,143,255,0.35);
-            transition: all 0.2s; position: relative;
-        }
-        .btn-mic.active {
-            background: #ff4d6d;
-            box-shadow: 0 6px 22px rgba(255,77,109,0.5);
-        }
-        .btn-mic.active::after {
-            content: '';
-            position: absolute; inset: -6px;
-            border-radius: 50%; border: 2px solid rgba(255,77,109,0.4);
-            animation: mic-ring 1.2s ease-out infinite;
-        }
-        @keyframes mic-ring {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.6); opacity: 0; }
-        }
-
-        /* ===== QUIZ PANE ===== */
-        .quiz-pane {
-            display: flex; flex-direction: column;
-            padding: 18px 16px; background: #0b0b12;
-            gap: 12px; overflow-y: auto;
-            scrollbar-width: thin; scrollbar-color: #2a2a38 transparent;
-        }
-        .quiz-header {
-            font-size: 0.85rem; font-weight: 700;
-            color: var(--accent2); letter-spacing: 0.05em;
-            text-transform: uppercase; padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .quiz-q {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 18px; padding: 16px;
-            font-size: 0.88rem; line-height: 1.6;
-            min-height: 80px; color: var(--text);
-            flex-shrink: 0;
-        }
-        .quiz-opts {
-            display: flex; flex-direction: column; gap: 8px;
-            flex-shrink: 0;
-        }
-        .quiz-opt-btn {
-            width: 100%; padding: 12px 14px;
-            border-radius: 13px; border: 2px solid var(--border);
-            background: var(--card); color: var(--text);
-            font-size: 0.86rem; cursor: pointer;
-            text-align: left; transition: all 0.18s; line-height: 1.4;
-        }
-        .quiz-opt-btn:not([disabled]):hover {
-            border-color: var(--accent2);
-            background: #1a1a28;
-            transform: translateX(3px);
-        }
-        .quiz-opt-btn.correct {
-            background: rgba(74,222,128,0.1);
-            border-color: var(--correct); color: #86efac;
-        }
-        .quiz-opt-btn.wrong {
-            background: rgba(248,113,113,0.1);
-            border-color: var(--wrong); color: #fca5a5;
-        }
-        .quiz-opt-btn[disabled] { cursor: default; }
-
-        .quiz-feedback {
-            background: #15152a; border-radius: 14px;
-            padding: 12px 14px; font-size: 0.83rem; line-height: 1.5;
-            color: #bbb; display: none; flex-shrink: 0;
-        }
-        .quiz-feedback.show { display: block; }
-
-        .btn-new-q {
-            width: 100%; padding: 13px;
-            border-radius: 13px; border: none;
-            background: linear-gradient(135deg, #1f1060, #0e1f60);
-            color: var(--accent2); font-weight: 700;
-            cursor: pointer; font-size: 0.88rem;
-            margin-top: auto; transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        .btn-new-q:hover:not([disabled]) { filter: brightness(1.25); }
-        .btn-new-q[disabled] { opacity: 0.55; cursor: default; }
-
-        /* ===== ONBOARDING ===== */
-        #onboarding {
-            position: fixed; inset: 0; z-index: 9999;
-            background: rgba(10,10,14,0.97);
-            display: flex; justify-content: center; align-items: center;
-            padding: 20px; backdrop-filter: blur(6px);
-        }
-        .setup-card {
-            background: var(--card); padding: 28px 26px;
-            border-radius: 28px; width: 100%; max-width: 440px;
-            border: 1px solid var(--border);
-            overflow-y: auto; max-height: 92dvh;
-        }
-        .setup-card h2 { margin: 0 0 20px; font-size: 1.3rem; text-align: center; }
-
-        label {
-            display: block; text-align: left;
-            margin: 12px 0 4px 4px;
-            font-size: 0.82rem; color: var(--accent);
-            letter-spacing: 0.04em; text-transform: uppercase;
-        }
-        input[type="password"], input[type="text"], select {
-            width: 100%; padding: 12px 14px;
-            margin-bottom: 2px;
-            border-radius: 12px; border: 2px solid var(--border);
-            background: #070710; color: #fff; font-size: 0.95rem;
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--accent); }
-
-        .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        input[type="range"] { flex: 1; accent-color: var(--accent); }
-        .range-val { font-size: 0.8rem; color: #888; min-width: 28px; text-align: right; }
-
-        .tts-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
-        .tts-toggle button {
-            flex: 1; padding: 10px 8px; border-radius: 11px;
-            border: 2px solid var(--border);
-            background: #070710; color: #777;
-            cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
-        }
-        .tts-toggle button.on {
-            border-color: var(--accent); color: var(--accent); background: rgba(195,143,255,0.08);
-        }
-
-        .btn-action {
-            width: 100%; padding: 15px; border-radius: 13px; border: none;
-            background: var(--accent); color: #1a0030;
-            font-weight: 800; cursor: pointer; font-size: 0.95rem;
-            margin-top: 6px; transition: filter 0.2s;
-        }
-        .btn-action:hover { filter: brightness(1.1); }
-        .btn-action.ghost {
-            background: #1e1e2e; color: #aaa;
-            border: 1px solid var(--border);
-        }
-
-        .reset-link {
-            display: block; text-align: center; margin-top: 12px;
-            color: #555; font-size: 0.8rem; cursor: pointer;
-            text-decoration: underline;
-        }
-        .reset-link:hover { color: var(--wrong); }
-
-        .hidden { display: none !important; }
+        .mic-active { color: #ea4335; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<!-- ===== ONBOARDING ===== -->
-<div id="onboarding">
-    <div class="setup-card">
-        <h2 id="st-title">Pamuk Ayarları ⚙️</h2>
+    <div id="chat-container">
+        <div id="messages"></div>
+    </div>
 
-        <div id="api-panel">
-            <label>Gemini API Anahtarı</label>
-            <input type="password" id="key-primary" placeholder="API anahtarını girin...">
-
-            <label>Ses Motoru</label>
-            <div class="tts-toggle">
-                <button id="btn-tts-browser" class="on" onclick="selectTTS('browser')">🔊 Tarayıcı</button>
-                <button id="btn-tts-gemini" onclick="selectTTS('gemini')">✨ Gemini AI</button>
+    <div id="quiz-panel">
+        <div id="quiz-content" style="display: none;">
+            <div class="question-box" id="question-text">Soru buraya gelecek?</div>
+            <div class="options-container">
+                <button class="option-btn" onclick="selectOption(0)" id="opt-0">A) </button>
+                <button class="option-btn" onclick="selectOption(1)" id="opt-1">B) </button>
+                <button class="option-btn" onclick="selectOption(2)" id="opt-2">C) </button>
+                <button class="option-btn" onclick="selectOption(3)" id="opt-3">D) </button>
             </div>
-
-            <!-- Browser TTS -->
-            <div id="browser-opts">
-                <label>Türkçe Ses</label>
-                <select id="voice-select"><option>Sesler yükleniyor…</option></select>
-                <label>Konuşma Hızı</label>
-                <div class="range-wrap">
-                    <input type="range" id="rate-range" min="0.5" max="1.8" step="0.1" value="1.0">
-                    <span class="range-val" id="rate-val">1.0</span>
-                </div>
-                <label>Ses Tonu</label>
-                <div class="range-wrap">
-                    <input type="range" id="pitch-range" min="0.5" max="1.8" step="0.1" value="1.0">
-                    <span class="range-val" id="pitch-val">1.0</span>
-                </div>
-            </div>
-
-            <!-- Gemini TTS -->
-            <div id="gemini-opts" class="hidden">
-                <label>Gemini Ses Karakteri</label>
-                <select id="gemini-voice">
-                    <option value="Kore">Kore – Nötr &amp; Dengeli</option>
-                    <option value="Aoede">Aoede – Anlatıcı</option>
-                    <option value="Puck">Puck – Neşeli &amp; Canlı</option>
-                    <option value="Zephyr">Zephyr – Yumuşak &amp; Sakin</option>
-                    <option value="Charon">Charon – Derin &amp; Otoriter</option>
-                    <option value="Fenrir">Fenrir – Güçlü &amp; Belirgin</option>
-                </select>
-                <p style="font-size:0.78rem; color:#666; margin: 6px 4px 0; line-height:1.5;">
-                    Gemini sesleri Türkçe metni konuşur ancak aksanlı olabilir. 
-                    Denemek için aşağıdaki test butonunu kullanın.
-                </p>
-            </div>
-
-            <button class="btn-action ghost" style="margin-top:14px;" onclick="testVoice()">🎵 Sesi Test Et</button>
-            <button class="btn-action" onclick="saveConfig()">Kaydet ve Başlat ▶</button>
-            <span class="reset-link" onclick="resetProfile()">Profili sıfırla ve yeni başlangıç yap</span>
         </div>
-
-        <div id="profile-panel" class="hidden">
-            <p id="q-text" style="color:var(--accent); font-weight:700; font-size:1.1rem; margin:0 0 18px; min-height:40px; text-align:center;"></p>
-            <input type="text" id="q-input" placeholder="Cevabınız…"
-                   onkeydown="if(event.key==='Enter' && !document.getElementById('next-btn').disabled) nextProfileStep()">
-            <button class="btn-action" id="next-btn" onclick="nextProfileStep()" disabled>İlerle →</button>
-        </div>
-    </div>
-</div>
-
-<!-- ===== SETTINGS BUTTON ===== -->
-<button class="settings-trigger" onclick="openSettings()">⚙️</button>
-
-<!-- ===== MAIN APP ===== -->
-<div class="app-shell">
-
-    <!-- CHARACTER PANE -->
-    <div class="char-pane">
-        <div id="cat-svg">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <radialGradient id="bodyGrad" cx="45%" cy="45%" r="60%">
-                        <stop offset="0%" stop-color="#ffffff"/>
-                        <stop offset="100%" stop-color="#ede0ff"/>
-                    </radialGradient>
-                </defs>
-                <!-- Body -->
-                <circle cx="100" cy="112" r="82" fill="url(#bodyGrad)"/>
-                <!-- Ears -->
-                <path d="M44 56 L14 6 L64 42 Z" fill="#f0e8ff"/>
-                <path d="M156 56 L186 6 L136 42 Z" fill="#f0e8ff"/>
-                <path d="M47 50 L24 16 L60 38 Z" fill="#d4b0ff" opacity="0.6"/>
-                <path d="M153 50 L176 16 L140 38 Z" fill="#d4b0ff" opacity="0.6"/>
-                <!-- Eyes -->
-                <circle cx="70" cy="102" r="12" fill="#1a1a2e"/>
-                <circle cx="130" cy="102" r="12" fill="#1a1a2e"/>
-                <circle cx="74" cy="97" r="4.5" fill="white"/>
-                <circle cx="134" cy="97" r="4.5" fill="white"/>
-                <!-- Nose -->
-                <ellipse cx="100" cy="122" rx="5" ry="3.5" fill="#ffb6c1"/>
-                <!-- Whiskers -->
-                <line x1="28" y1="118" x2="82" y2="122" stroke="#bbb" stroke-width="1.5" opacity="0.55"/>
-                <line x1="28" y1="128" x2="82" y2="127" stroke="#bbb" stroke-width="1.5" opacity="0.55"/>
-                <line x1="118" y1="122" x2="172" y2="118" stroke="#bbb" stroke-width="1.5" opacity="0.55"/>
-                <line x1="118" y1="127" x2="172" y2="128" stroke="#bbb" stroke-width="1.5" opacity="0.55"/>
-                <!-- Mouth (animated by JS) -->
-                <path id="mouth" d="M85 142 Q100 142 115 142"
-                      stroke="#1a1a2e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-            </svg>
-        </div>
-        <div class="status-orb" id="status-orb"></div>
-    </div>
-
-    <!-- CHAT PANE -->
-    <div class="chat-pane">
-        <div id="chat-window"></div>
-        <div class="chat-controls">
-            <button class="btn-mic" id="mic-btn" onclick="toggleConversation()">🎤</button>
+        <div id="start-screen" style="text-align: center;">
+            <button onclick="initAssistant()" style="padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 5px;">Asistanı Başlat</button>
+            <p>Konuşmaya başlamak için tıklayın.</p>
         </div>
     </div>
 
-    <!-- QUIZ PANE -->
-    <div class="quiz-pane">
-        <div class="quiz-header">📝 Quiz</div>
-        <div class="quiz-q" id="quiz-q">
-            Hazır olduğunda "Yeni Soru" butonuna dokun! 🚀
-        </div>
-        <div class="quiz-opts" id="quiz-opts"></div>
-        <div class="quiz-feedback" id="quiz-fb"></div>
-        <button class="btn-new-q" id="new-q-btn" onclick="generateQuiz()">Yeni Soru 🎲</button>
-    </div>
-</div>
+    <div id="status">Durum: Beklemede</div>
 
-<script>
-'use strict';
+    <script>
+        let recognition;
+        let synth = window.speechSynthesis;
+        let isListening = false;
+        let currentQuestion = null;
 
-/* ===================================================
-   CONFIG (persisted in localStorage)
-=================================================== */
-const LS = {
-    k1:          'p_v14_k1',
-    ttsType:     'p_v14_tts',
-    voiceName:   'p_v14_vname',
-    rate:        'p_v14_rate',
-    pitch:       'p_v14_pitch',
-    gVoice:      'p_v14_gvoice',
-    prof:        'p_v14_prof'
-};
+        // Test Verisi Örneği
+        const quizData = [
+            { q: "Türkiye'nin başkenti neresidir?", a: ["Ankara", "İstanbul", "İzmir", "Bursa"], correct: 0 },
+            { q: "Hangi gezegen 'Kızıl Gezegen' olarak bilinir?", a: ["Venüs", "Mars", "Jüpiter", "Satürn"], correct: 1 }
+        ];
+        let quizIndex = 0;
 
-let cfg = {
-    k1:        localStorage.getItem(LS.k1)      || '',
-    ttsType:   localStorage.getItem(LS.ttsType) || 'browser',
-    voiceName: localStorage.getItem(LS.voiceName) || '',
-    rate:      parseFloat(localStorage.getItem(LS.rate)  || '1.0'),
-    pitch:     parseFloat(localStorage.getItem(LS.pitch) || '1.0'),
-    gVoice:    localStorage.getItem(LS.gVoice)  || 'Kore',
-};
+        function initAssistant() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = false; // Her cümle sonrası onend tetiklenmesi için false
+            recognition.interimResults = false;
 
-let prof = JSON.parse(localStorage.getItem(LS.prof) || '{}');
+            recognition.onstart = () => {
+                isListening = true;
+                updateStatus("Dinliyor...", true);
+            };
 
-/* ===================================================
-   STATE
-=================================================== */
-const PROF_QS = ['Adın ne?', 'Kaç yaşındasın?', 'Kız mısın erkek misin?', 'Kaçıncı sınıftasın?'];
-const PROF_KS = ['name', 'age', 'gender', 'grade'];
-let profStep = 0;
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript.toLowerCase();
+                processInput(text);
+            };
 
-let voices        = [];
-let selectedVoice = null;
+            recognition.onend = () => {
+                isListening = false;
+                // Eğer asistan konuşmuyorsa dinlemeyi tekrar başlat (Sürekli dinleme döngüsü)
+                if (!synth.speaking) {
+                    recognition.start();
+                }
+            };
 
-let convActive   = false;  // conversation mode on/off
-let isSpeaking   = false;  // TTS playing
-let isListening  = false;  // STT active
-let isProcessing = false;  // waiting for AI response
-let listenTimer  = null;
-let currentAudio = null;   // Gemini TTS audio element
-let currentQuiz  = null;
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('quiz-content').style.display = 'block';
+            
+            speak("Merhaba, ben asistanın. Teste hazır mısın? İlk soruyu soruyorum.");
+            setTimeout(showQuestion, 2000);
+        }
 
-const synth = window.speechSynthesis;
+        function speak(text, callback) {
+            // Konuşurken dinlemeyi durdur (kendi sesini duymasın)
+            if (isListening) recognition.stop();
 
-/* ===================================================
-   BROWSER VOICES
-=================================================== */
-function loadVoices() {
-    const all = synth.getVoices();
-    voices = all.filter(v => v.lang && v.lang.startsWith('tr'));
-    if (!voices.length) voices = all.filter(v => v.lang && v.lang.includes('TR'));
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'tr-TR';
+            utterance.rate = 1.1;
 
-    const sel = document.getElementById('voice-select');
-    if (!sel) return;
-    sel.innerHTML = voices.length
-        ? voices.map((v, i) => `<option value="${i}">${v.name} (${v.lang})</option>`).join('')
-        : '<option value="">Türkçe ses bulunamadı</option>';
+            utterance.onend = () => {
+                updateStatus("Dinleme moduna geçiliyor...");
+                recognition.start(); // Konuşma bitince dinlemeyi aç
+                if (callback) callback();
+            };
 
-    if (cfg.voiceName) {
-        const idx = voices.findIndex(v => v.name === cfg.voiceName);
-        if (idx !== -1) sel.value = idx;
-    }
-    selectedVoice = voices[parseInt(sel.value)] || voices[0] || null;
-}
+            synth.speak(utterance);
+        }
 
-if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-/* ===================================================
-   TTS — unified speak()
-=================================================== */
-function speak(text, onDone) {
-    if (!text) { if (onDone) onDone(); return; }
-    if (cfg.ttsType === 'gemini') speakGemini(text, onDone);
-    else                          speakBrowser(text, onDone);
-}
-
-function speakBrowser(text, onDone) {
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.voice = selectedVoice;
-    u.lang  = 'tr-TR';
-    u.rate  = cfg.rate;
-    u.pitch = cfg.pitch;
-
-    isSpeaking = true;
-    mouthOpen(true);
-    setOrb('speaking');
-
-    let fired = false;
-    const done = () => {
-        if (fired) return; fired = true;
-        isSpeaking = false;
-        mouthOpen(false);
-        setOrb('idle');
-        if (onDone) onDone();
-        scheduleListening();
-    };
-    u.onend   = done;
-    u.onerror = done;
-
-    synth.speak(u);
-
-    // Safety: if no voices, resolve immediately
-    if (!voices.length) setTimeout(done, 80);
-}
-
-async function speakGemini(text, onDone) {
-    isSpeaking = true;
-    mouthOpen(true);
-    setOrb('speaking');
-
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-
-    const done = () => {
-        isSpeaking = false;
-        mouthOpen(false);
-        setOrb('idle');
-        if (onDone) onDone();
-        scheduleListening();
-    };
-
-    try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${cfg.k1}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text }] }],
-                    generationConfig: {
-                        responseModalities: ['AUDIO'],
-                        speechConfig: {
-                            voiceConfig: { prebuiltVoiceConfig: { voiceName: cfg.gVoice } }
-                        }
-                    }
-                })
+        function showQuestion() {
+            if (quizIndex >= quizData.length) {
+                speak("Tebrikler, testi bitirdin!");
+                return;
             }
-        );
-        const data = await res.json();
 
-        if (data.error || !data.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
-            throw new Error(data.error?.message || 'No audio');
-        }
-
-        const { mimeType, data: b64 } = data.candidates[0].content.parts[0].inlineData;
-        const audioSrc = buildAudioSrc(mimeType, b64);
-
-        currentAudio = new Audio(audioSrc);
-        currentAudio.onended  = done;
-        currentAudio.onerror  = () => speakBrowser(text, onDone);
-        await currentAudio.play();
-    } catch (e) {
-        console.warn('Gemini TTS hata, tarayıcı sesine geçiliyor:', e.message);
-        isSpeaking = false; // reset before browser speak resets it
-        speakBrowser(text, onDone);
-    }
-}
-
-// Handles raw PCM (audio/L16;rate=...) by wrapping in WAV header
-function buildAudioSrc(mimeType, b64) {
-    if (!mimeType.includes('L16') && !mimeType.includes('pcm')) {
-        return `data:${mimeType};base64,${b64}`;
-    }
-    const rate = parseInt(mimeType.match(/rate=(\d+)/)?.[1] || '24000');
-    const pcm  = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const wav  = addWavHeader(pcm, rate);
-    return `data:audio/wav;base64,${wav}`;
-}
-
-function addWavHeader(pcm, sampleRate) {
-    const numCh = 1, bps = 16;
-    const hdr = new ArrayBuffer(44);
-    const v   = new DataView(hdr);
-    const writeStr = (off, s) => [...s].forEach((c, i) => v.setUint8(off + i, c.charCodeAt(0)));
-    writeStr(0, 'RIFF');
-    v.setUint32(4, 36 + pcm.length, true);
-    writeStr(8, 'WAVE');
-    writeStr(12, 'fmt ');
-    v.setUint32(16, 16, true);
-    v.setUint16(20, 1, true);
-    v.setUint16(22, numCh, true);
-    v.setUint32(24, sampleRate, true);
-    v.setUint32(28, sampleRate * numCh * (bps / 8), true);
-    v.setUint16(32, numCh * (bps / 8), true);
-    v.setUint16(34, bps, true);
-    writeStr(36, 'data');
-    v.setUint32(40, pcm.length, true);
-    const out = new Uint8Array(44 + pcm.length);
-    out.set(new Uint8Array(hdr));
-    out.set(pcm, 44);
-    let bin = '';
-    for (let i = 0; i < out.length; i++) bin += String.fromCharCode(out[i]);
-    return btoa(bin);
-}
-
-/* ===================================================
-   SPEECH RECOGNITION
-=================================================== */
-let rec;
-try {
-    rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    rec.lang = 'tr-TR';
-    rec.continuous = false;
-    rec.interimResults = false;
-} catch(e) {
-    console.warn('SpeechRecognition desteklenmiyor');
-}
-
-if (rec) {
-    rec.onstart = () => {
-        isListening = true;
-        setOrb('listening');
-        document.getElementById('mic-btn').classList.add('active');
-    };
-    rec.onend = () => {
-        isListening = false;
-        if (!isSpeaking && !isProcessing) setOrb('idle');
-        document.getElementById('mic-btn').classList.remove('active');
-        if (convActive && !isSpeaking && !isProcessing) scheduleListening();
-    };
-    rec.onresult = (e) => {
-        const text = e.results[0][0].transcript.trim();
-        handleVoiceInput(text);
-    };
-    rec.onerror = (e) => {
-        isListening = false;
-        document.getElementById('mic-btn').classList.remove('active');
-        if (e.error === 'not-allowed') {
-            addBubble('⚠️ Mikrofon izni gerekli. Lütfen tarayıcı ayarlarından izin verin.', 'sys');
-            convActive = false; return;
-        }
-        if (convActive && !isSpeaking && !isProcessing && e.error !== 'aborted') {
-            setTimeout(scheduleListening, 1000);
-        }
-    };
-}
-
-function scheduleListening(delay = 450) {
-    clearTimeout(listenTimer);
-    if (!convActive || isSpeaking || isListening || isProcessing) return;
-    listenTimer = setTimeout(() => {
-        if (!convActive || isSpeaking || isListening || isProcessing) return;
-        try { rec.start(); } catch(e) {}
-    }, delay);
-}
-
-function toggleConversation() {
-    if (!convActive) {
-        convActive = true;
-        addBubble('🎤 Sürekli dinleme açıldı. Konuşabilirsin!', 'sys');
-        scheduleListening(200);
-    } else {
-        convActive = false;
-        clearTimeout(listenTimer);
-        if (isListening) { try { rec.abort(); } catch(e) {} }
-        setOrb('idle');
-        addBubble('⏸ Dinleme durduruldu. Tekrar başlatmak için 🎤 butonuna bas.', 'sys');
-    }
-}
-
-function handleVoiceInput(text) {
-    // Check if quiz is active and waiting for answer
-    if (currentQuiz && document.querySelectorAll('.quiz-opt-btn:not([disabled])').length > 0) {
-        const letter = detectQuizAnswer(text);
-        if (letter) {
-            const btn = [...document.querySelectorAll('.quiz-opt-btn')].find(b => b.dataset.letter === letter);
-            checkAnswer(letter, btn);
-            return;
-        }
-    }
-    addBubble(text, 'user');
-    callAI(text);
-}
-
-/* ===================================================
-   AI CHAT
-=================================================== */
-function addBubble(text, cls) {
-    const w = document.getElementById('chat-window');
-    const b = document.createElement('div');
-    b.className = `bubble ${cls}`;
-    b.innerText = text;
-    w.appendChild(b);
-    w.scrollTop = w.scrollHeight;
-}
-
-async function callAI(text) {
-    isProcessing = true;
-    const prompt = `Sen sevecen ve eğlenceli bir ilkokul öğretmenisin. Adın Pamuk. Karşındaki ${prof.name || 'öğrenci'} isimli, ${prof.grade || '3'}. sınıf öğrencisi. Kısa, sıcak ve anlaşılır bir cevap ver (max 3 cümle). Soru: ${text}`;
-    try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${cfg.k1}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            currentQuestion = quizData[quizIndex];
+            document.getElementById('question-text').innerText = currentQuestion.q;
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                btn.innerText = `${String.fromCharCode(65 + i)}) ${currentQuestion.a[i]}`;
+                btn.className = 'option-btn'; // Renkleri sıfırla
             }
-        );
-        const data = await res.json();
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Bir sorun oluştu, tekrar dener misin?';
-        addBubble(reply, 'ai');
-        isProcessing = false;
-        speak(reply);
-    } catch(e) {
-        const err = 'Bağlantı sorunu oluştu, tekrar dener misin?';
-        addBubble(err, 'ai');
-        isProcessing = false;
-        speak(err);
-    }
-}
 
-/* ===================================================
-   QUIZ
-=================================================== */
-async function generateQuiz() {
-    const btn = document.getElementById('new-q-btn');
-    btn.disabled = true; btn.innerText = '⏳ Hazırlanıyor…';
+            speak(`Soru ${quizIndex + 1}: ${currentQuestion.q}. Şıkları ekranda görebilir veya sesli söyleyebilirsin.`);
+        }
 
-    document.getElementById('quiz-q').innerText = '⏳ Soru hazırlanıyor…';
-    document.getElementById('quiz-opts').innerHTML = '';
-    const fb = document.getElementById('quiz-fb');
-    fb.innerText = ''; fb.classList.remove('show');
-    currentQuiz = null;
+        function processInput(text) {
+            console.log("Duyulan:", text);
+            updateStatus(`Duyulan: "${text}"`);
 
-    const grade = prof.grade || '3';
-    const prompt = `${grade}. sınıf Türk ilkokul müfredatına uygun, yaratıcı bir test sorusu hazırla. SADECE şu JSON formatında yanıt ver, başka hiçbir şey yazma, markdown ya da kod bloğu ekleme:
-{"question":"Soru metni?","options":["A) Birinci","B) İkinci","C) Üçüncü","D) Dördüncü"],"correct":"A","explanation":"Kısa açıklama"}`;
-
-    try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${cfg.k1}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            }
-        );
-        const data = await res.json();
-        let raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-        raw = raw.replace(/```json|```/g, '').trim();
-        const quiz = JSON.parse(raw);
-        showQuiz(quiz);
-    } catch(e) {
-        document.getElementById('quiz-q').innerText = '❌ Soru oluşturulamadı. Tekrar deneyin.';
-    } finally {
-        btn.disabled = false; btn.innerText = 'Yeni Soru 🎲';
-    }
-}
-
-function showQuiz(quiz) {
-    currentQuiz = quiz;
-    document.getElementById('quiz-q').innerText = quiz.question;
-
-    const container = document.getElementById('quiz-opts');
-    container.innerHTML = '';
-    quiz.options.forEach(opt => {
-        const letter = opt.charAt(0);
-        const btn = document.createElement('button');
-        btn.className = 'quiz-opt-btn';
-        btn.dataset.letter = letter;
-        btn.innerText = opt;
-        btn.onclick = () => checkAnswer(letter, btn);
-        container.appendChild(btn);
-    });
-
-    const fb = document.getElementById('quiz-fb');
-    fb.innerText = ''; fb.classList.remove('show');
-
-    speak(quiz.question);
-}
-
-function checkAnswer(letter, btn) {
-    if (!currentQuiz || document.querySelectorAll('.quiz-opt-btn:not([disabled])').length === 0) return;
-
-    const correct = letter === currentQuiz.correct;
-
-    document.querySelectorAll('.quiz-opt-btn').forEach(b => {
-        b.disabled = true;
-        if (b.dataset.letter === currentQuiz.correct) b.classList.add('correct');
-    });
-    if (!correct && btn) btn.classList.add('wrong');
-
-    const fb = document.getElementById('quiz-fb');
-    fb.innerText = correct
-        ? `🎉 Harika, doğru! ${currentQuiz.explanation}`
-        : `❌ Maalesef. Doğru cevap ${currentQuiz.correct} şıkkı. ${currentQuiz.explanation}`;
-    fb.classList.add('show');
-
-    speak(fb.innerText);
-}
-
-function detectQuizAnswer(text) {
-    const t = text.trim().toUpperCase();
-    const map = { A: [/^A$/, /^BİR$/, /^1$/], B: [/^B$/, /^İKİ$/, /^2$/], C: [/^C$/, /^ÜÇ$/, /^3$/], D: [/^D$/, /^DÖRT$/, /^4$/] };
-    for (const [letter, patterns] of Object.entries(map)) {
-        if (patterns.some(p => p.test(t))) return letter;
-    }
-    if (currentQuiz) {
-        for (let i = 0; i < currentQuiz.options.length; i++) {
-            const content = currentQuiz.options[i].replace(/^[A-D][).]\s*/, '').toLowerCase();
-            const snippet = content.substring(0, Math.min(7, content.length));
-            if (snippet.length >= 3 && text.toLowerCase().includes(snippet)) {
-                return String.fromCharCode(65 + i);
+            // Şık kontrolü (Sesli yanıt)
+            if (text.includes("a şıkkı") || text === "a") selectOption(0);
+            else if (text.includes("b şıkkı") || text === "b") selectOption(1);
+            else if (text.includes("c şıkkı") || text === "c") selectOption(2);
+            else if (text.includes("d şıkkı") || text === "d") selectOption(3);
+            // Kelime bazlı kontrol (Opsiyonel)
+            else {
+                const options = currentQuestion.a.map(opt => opt.toLowerCase());
+                const foundIndex = options.findIndex(opt => text.includes(opt));
+                if (foundIndex !== -1) selectOption(foundIndex);
             }
         }
-    }
-    return null;
-}
 
-/* ===================================================
-   VISUAL HELPERS
-=================================================== */
-function mouthOpen(open) {
-    const m = document.getElementById('mouth');
-    if (m) m.setAttribute('d', open ? 'M85 142 Q100 164 115 142' : 'M85 142 Q100 142 115 142');
-}
+        function selectOption(index) {
+            if (!currentQuestion) return;
 
-function setOrb(state) {
-    const orb = document.getElementById('status-orb');
-    if (!orb) return;
-    orb.className = 'status-orb' + (state !== 'idle' ? ` ${state}` : '');
-}
+            const isCorrect = index === currentQuestion.correct;
+            const btn = document.getElementById(`opt-${index}`);
+            
+            if (isCorrect) {
+                btn.classList.add('correct');
+                speak("Harika! Bu cevap doğru.", () => {
+                    quizIndex++;
+                    setTimeout(showQuestion, 1000);
+                });
+            } else {
+                btn.classList.add('wrong');
+                const dogruSik = String.fromCharCode(65 + currentQuestion.correct);
+                speak(`Üzgünüm, bu yanlış. Doğru cevap ${dogruSik} şıkkı olmalıydı.`, () => {
+                    quizIndex++;
+                    setTimeout(showQuestion, 1000);
+                });
+            }
+            currentQuestion = null; // Çift tetiklenmeyi önle
+        }
 
-/* ===================================================
-   ONBOARDING / SETTINGS
-=================================================== */
-function selectTTS(type) {
-    cfg.ttsType = type;
-    document.getElementById('btn-tts-browser').classList.toggle('on', type === 'browser');
-    document.getElementById('btn-tts-gemini').classList.toggle('on', type === 'gemini');
-    document.getElementById('browser-opts').classList.toggle('hidden', type !== 'browser');
-    document.getElementById('gemini-opts').classList.toggle('hidden', type !== 'gemini');
-}
-
-function testVoice() {
-    updateVoiceParams();
-    // Use key from input for test
-    const testKey = document.getElementById('key-primary').value.trim() || cfg.k1;
-    if (cfg.ttsType === 'gemini' && !testKey) { alert('Test için API anahtarı gerekli!'); return; }
-    const prevKey = cfg.k1;
-    cfg.k1 = testKey || cfg.k1;
-    speak('Merhaba! Ben Pamuk öğretmeni. Seninle öğrenmek çok güzel!', () => { cfg.k1 = prevKey; });
-}
-
-function updateVoiceParams() {
-    const vIdx = parseInt(document.getElementById('voice-select').value);
-    selectedVoice = voices[vIdx] || voices[0] || null;
-    cfg.voiceName = selectedVoice ? selectedVoice.name : '';
-    cfg.gVoice    = document.getElementById('gemini-voice').value;
-    cfg.rate      = parseFloat(document.getElementById('rate-range').value);
-    cfg.pitch     = parseFloat(document.getElementById('pitch-range').value);
-}
-
-function saveConfig() {
-    const key = document.getElementById('key-primary').value.trim();
-    if (!key) { alert('API anahtarı gerekli!'); return; }
-    cfg.k1 = key;
-    updateVoiceParams();
-
-    localStorage.setItem(LS.k1,        cfg.k1);
-    localStorage.setItem(LS.ttsType,   cfg.ttsType);
-    localStorage.setItem(LS.voiceName, cfg.voiceName);
-    localStorage.setItem(LS.rate,      cfg.rate);
-    localStorage.setItem(LS.pitch,     cfg.pitch);
-    localStorage.setItem(LS.gVoice,    cfg.gVoice);
-
-    if (!prof.grade) {
-        // First-time: go to profile questions
-        document.getElementById('api-panel').classList.add('hidden');
-        document.getElementById('profile-panel').classList.remove('hidden');
-        document.getElementById('st-title').innerText = 'Seni tanıyalım 👋';
-        profStep = 0;
-        askProfile();
-    } else {
-        // Settings update only: close and continue
-        document.getElementById('onboarding').classList.add('hidden');
-        addBubble('✅ Ayarlar kaydedildi!', 'sys');
-    }
-}
-
-function askProfile() {
-    const qText   = document.getElementById('q-text');
-    const qInput  = document.getElementById('q-input');
-    const nextBtn = document.getElementById('next-btn');
-
-    qText.innerText = PROF_QS[profStep];
-    qInput.value    = '';
-    nextBtn.disabled = true;
-    qInput.disabled  = true;
-
-    // Speak question; enable input only AFTER speech ends
-    speak(PROF_QS[profStep], () => {
-        nextBtn.disabled = false;
-        qInput.disabled  = false;
-        qInput.focus();
-    });
-}
-
-function nextProfileStep() {
-    const val = document.getElementById('q-input').value.trim();
-    if (!val) return;
-    prof[PROF_KS[profStep]] = val;
-    profStep++;
-
-    if (profStep < PROF_QS.length) {
-        askProfile();
-    } else {
-        localStorage.setItem(LS.prof, JSON.stringify(prof));
-        document.getElementById('onboarding').classList.add('hidden');
-        greet();
-    }
-}
-
-function openSettings() {
-    // Pre-fill current values
-    document.getElementById('key-primary').value       = cfg.k1;
-    document.getElementById('rate-range').value        = cfg.rate;
-    document.getElementById('pitch-range').value       = cfg.pitch;
-    document.getElementById('rate-val').innerText      = cfg.rate;
-    document.getElementById('pitch-val').innerText     = cfg.pitch;
-    document.getElementById('gemini-voice').value      = cfg.gVoice;
-    selectTTS(cfg.ttsType);
-    loadVoices();
-
-    document.getElementById('api-panel').classList.remove('hidden');
-    document.getElementById('profile-panel').classList.add('hidden');
-    document.getElementById('st-title').innerText = 'Pamuk Ayarları ⚙️';
-    document.getElementById('onboarding').classList.remove('hidden');
-
-    // Pause listening while in settings
-    convActive = false;
-    clearTimeout(listenTimer);
-}
-
-function resetProfile() {
-    if (!confirm('Profil sıfırlanacak ve soru-cevap yeniden başlayacak. Emin misin?')) return;
-    localStorage.removeItem(LS.prof);
-    prof = {};
-    document.getElementById('api-panel').classList.add('hidden');
-    document.getElementById('profile-panel').classList.remove('hidden');
-    document.getElementById('st-title').innerText = 'Seni tanıyalım 👋';
-    profStep = 0;
-    askProfile();
-}
-
-function greet() {
-    convActive = true;
-    const msg = `Selam ${prof.name}! Ben Pamuk öğretmeni. ${prof.grade}. sınıfta harika şeyler öğreneceğiz. Hazır mısın? 🐱`;
-    addBubble(msg, 'ai');
-    speak(msg);
-}
-
-/* ===================================================
-   RANGE INPUT LABELS
-=================================================== */
-document.getElementById('rate-range').oninput  = function() { document.getElementById('rate-val').innerText  = this.value; };
-document.getElementById('pitch-range').oninput = function() { document.getElementById('pitch-val').innerText = this.value; };
-
-/* ===================================================
-   INIT
-=================================================== */
-window.onload = () => {
-    setTimeout(loadVoices, 500);
-    selectTTS(cfg.ttsType);
-
-    document.getElementById('rate-range').value   = cfg.rate;
-    document.getElementById('pitch-range').value  = cfg.pitch;
-    document.getElementById('rate-val').innerText = cfg.rate;
-    document.getElementById('pitch-val').innerText = cfg.pitch;
-    document.getElementById('gemini-voice').value = cfg.gVoice;
-
-    if (cfg.k1 && prof.grade) {
-        document.getElementById('onboarding').classList.add('hidden');
-        greet();
-    }
-};
-</script>
+        function updateStatus(msg, active = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `Durum: <span class="${active ? 'mic-active' : ''}">${msg}</span>`;
+        }
+    </script>
 </body>
 </html>

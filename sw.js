@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pamuk-v11';
+const CACHE_NAME = 'pamuk-v14';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -14,11 +14,9 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 

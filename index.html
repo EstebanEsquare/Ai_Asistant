@@ -2,236 +2,213 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gelişmiş AI Asistan & Test Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Asistan Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
     <style>
         :root {
-            --primary: #4285f4;
-            --bg: #f8f9fa;
-            --panel-bg: #ffffff;
+            --bg: #121212;
+            --card: #1e1e1e;
+            --primary: #03dac6;
+            --accent: #bb86fc;
+            --text: #ffffff;
+            --error: #cf6679;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
             display: flex;
             height: 100vh;
-            margin: 0;
-            background-color: var(--bg);
+            overflow: hidden;
         }
-
-        /* Sol Taraf: Sohbet Geçmişi */
-        #chat-container {
+        /* Sol Panel: Asistan Durumu */
+        .assistant-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #333;
             padding: 20px;
-            border-right: 1px solid #ddd;
-            overflow-y: auto;
+        }
+        .mic-status {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(3, 218, 198, 0.3);
+            transition: all 0.3s;
+        }
+        .mic-active {
+            animation: pulse 1.5s infinite;
+            background: var(--accent);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(187, 134, 252, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(187, 134, 252, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(187, 134, 252, 0); }
         }
 
-        /* Sağ Taraf: Test Paneli */
-        #quiz-panel {
-            width: 400px;
-            background: var(--panel-bg);
-            padding: 30px;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        /* Sağ Panel: Test Arayüzü */
+        .quiz-panel {
+            flex: 1.5;
+            padding: 40px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            background: #161616;
         }
-
         .question-box {
             font-size: 1.4rem;
-            font-weight: bold;
             margin-bottom: 30px;
-            color: #333;
+            line-height: 1.5;
         }
-
         .options-container {
             display: grid;
             gap: 15px;
         }
-
         .option-btn {
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            background: white;
-            cursor: pointer;
-            font-size: 1.1rem;
-            transition: all 0.2s;
-            text-align: left;
-        }
-
-        .option-btn:hover {
-            border-color: var(--primary);
-            background: #e8f0fe;
-        }
-
-        .option-btn.correct { background: #d4edda; border-color: #28a745; }
-        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; }
-
-        #status {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            border-radius: 20px;
-            background: #333;
+            background: var(--card);
+            border: 2px solid #333;
             color: white;
-            font-size: 0.9rem;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: left;
+            font-size: 1.1rem;
+            cursor: pointer;
+            min-height: 55px;
+            transition: 0.2s;
         }
-
-        .mic-active { color: #ea4335; font-weight: bold; }
+        .option-btn:active, .option-btn.selected {
+            background: var(--primary);
+            color: black;
+            border-color: var(--primary);
+        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="chat-container">
-        <div id="messages"></div>
+    <div class="assistant-panel">
+        <div id="micIcon" class="mic-status">🎤</div>
+        <div id="statusText">Dinlemeye başlamak için dokunun</div>
+        <button id="startBtn" style="margin-top:20px; padding: 10px 20px; border-radius: 20px;">Sürekli Dinlemeyi Başlat</button>
     </div>
 
-    <div id="quiz-panel">
-        <div id="quiz-content" style="display: none;">
-            <div class="question-box" id="question-text">Soru buraya gelecek?</div>
-            <div class="options-container">
-                <button class="option-btn" onclick="selectOption(0)" id="opt-0">A) </button>
-                <button class="option-btn" onclick="selectOption(1)" id="opt-1">B) </button>
-                <button class="option-btn" onclick="selectOption(2)" id="opt-2">C) </button>
-                <button class="option-btn" onclick="selectOption(3)" id="opt-3">D) </button>
-            </div>
-        </div>
-        <div id="start-screen" style="text-align: center;">
-            <button onclick="initAssistant()" style="padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 5px;">Asistanı Başlat</button>
-            <p>Konuşmaya başlamak için tıklayın.</p>
+    <div class="quiz-panel hidden" id="quizPanel">
+        <div class="question-box" id="questionText">Soru yükleniyor...</div>
+        <div class="options-container" id="optionsGrid">
+            <!-- Şıklar buraya gelecek -->
         </div>
     </div>
-
-    <div id="status">Durum: Beklemede</div>
 
     <script>
-        let recognition;
-        let synth = window.speechSynthesis;
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const synth = window.speechSynthesis;
+        
+        recognition.lang = 'tr-TR';
+        recognition.continuous = true; // Kesintisiz dinleme
+        recognition.interimResults = false;
+
         let isListening = false;
-        let currentQuestion = null;
+        let currentQuestionIndex = 0;
+        let waitingForAnswer = false;
 
-        // Test Verisi Örneği
-        const quizData = [
-            { q: "Türkiye'nin başkenti neresidir?", a: ["Ankara", "İstanbul", "İzmir", "Bursa"], correct: 0 },
-            { q: "Hangi gezegen 'Kızıl Gezegen' olarak bilinir?", a: ["Venüs", "Mars", "Jüpiter", "Satürn"], correct: 1 }
+        const questions = [
+            { q: "PMP terminolojisinde, 'Kritik Yol' projenin neyini belirler?", a: ["Bütçeyi", "Minimum süreyi", "Riskleri", "Kaliteyi"], correct: 1 },
+            { q: "Bir mekanik tasarımda, emniyet katsayısı hangisinden büyüktür?", a: ["0", "0.5", "1", "10"], correct: 2 }
         ];
-        let quizIndex = 0;
 
-        function initAssistant() {
-            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'tr-TR';
-            recognition.continuous = false; // Her cümle sonrası onend tetiklenmesi için false
-            recognition.interimResults = false;
-
-            recognition.onstart = () => {
-                isListening = true;
-                updateStatus("Dinliyor...", true);
-            };
-
-            recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript.toLowerCase();
-                processInput(text);
-            };
-
-            recognition.onend = () => {
-                isListening = false;
-                // Eğer asistan konuşmuyorsa dinlemeyi tekrar başlat (Sürekli dinleme döngüsü)
-                if (!synth.speaking) {
-                    recognition.start();
-                }
-            };
-
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('quiz-content').style.display = 'block';
-            
-            speak("Merhaba, ben asistanın. Teste hazır mısın? İlk soruyu soruyorum.");
-            setTimeout(showQuestion, 2000);
-        }
-
+        // --- SES YÖNETİMİ ---
         function speak(text, callback) {
-            // Konuşurken dinlemeyi durdur (kendi sesini duymasın)
-            if (isListening) recognition.stop();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'tr-TR';
-            utterance.rate = 1.1;
-
-            utterance.onend = () => {
-                updateStatus("Dinleme moduna geçiliyor...");
-                recognition.start(); // Konuşma bitince dinlemeyi aç
-                if (callback) callback();
-            };
-
-            synth.speak(utterance);
+            synth.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            // Gemini benzeri ses seçimi (Android Google sesleri genellikle en iyisidir)
+            const voices = synth.getVoices();
+            utter.voice = voices.find(v => v.name.includes('Google') && v.lang === 'tr-TR') || voices[0];
+            utter.rate = 1.0;
+            utter.onend = () => { if(callback) callback(); };
+            synth.speak(utter);
         }
 
-        function showQuestion() {
-            if (quizIndex >= quizData.length) {
-                speak("Tebrikler, testi bitirdin!");
-                return;
-            }
-
-            currentQuestion = quizData[quizIndex];
-            document.getElementById('question-text').innerText = currentQuestion.q;
-            for (let i = 0; i < 4; i++) {
-                const btn = document.getElementById(`opt-${i}`);
-                btn.innerText = `${String.fromCharCode(65 + i)}) ${currentQuestion.a[i]}`;
-                btn.className = 'option-btn'; // Renkleri sıfırla
-            }
-
-            speak(`Soru ${quizIndex + 1}: ${currentQuestion.q}. Şıkları ekranda görebilir veya sesli söyleyebilirsin.`);
-        }
-
-        function processInput(text) {
-            console.log("Duyulan:", text);
-            updateStatus(`Duyulan: "${text}"`);
-
-            // Şık kontrolü (Sesli yanıt)
-            if (text.includes("a şıkkı") || text === "a") selectOption(0);
-            else if (text.includes("b şıkkı") || text === "b") selectOption(1);
-            else if (text.includes("c şıkkı") || text === "c") selectOption(2);
-            else if (text.includes("d şıkkı") || text === "d") selectOption(3);
-            // Kelime bazlı kontrol (Opsiyonel)
-            else {
-                const options = currentQuestion.a.map(opt => opt.toLowerCase());
-                const foundIndex = options.findIndex(opt => text.includes(opt));
-                if (foundIndex !== -1) selectOption(foundIndex);
-            }
-        }
-
-        function selectOption(index) {
-            if (!currentQuestion) return;
-
-            const isCorrect = index === currentQuestion.correct;
-            const btn = document.getElementById(`opt-${index}`);
+        // --- TEST MANTIĞI ---
+        function loadQuestion() {
+            waitingForAnswer = true;
+            const data = questions[currentQuestionIndex];
+            document.getElementById('quizPanel').classList.remove('hidden');
+            document.getElementById('questionText').innerText = data.q;
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
             
-            if (isCorrect) {
-                btn.classList.add('correct');
-                speak("Harika! Bu cevap doğru.", () => {
-                    quizIndex++;
-                    setTimeout(showQuestion, 1000);
-                });
-            } else {
-                btn.classList.add('wrong');
-                const dogruSik = String.fromCharCode(65 + currentQuestion.correct);
-                speak(`Üzgünüm, bu yanlış. Doğru cevap ${dogruSik} şıkkı olmalıydı.`, () => {
-                    quizIndex++;
-                    setTimeout(showQuestion, 1000);
-                });
-            }
-            currentQuestion = null; // Çift tetiklenmeyi önle
+            data.a.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = `${String.fromCharCode(65 + index)}: ${opt}`;
+                btn.onclick = () => handleAnswer(index);
+                grid.appendChild(btn);
+            });
+
+            speak(data.q + ". Şıklar şöyle: " + data.a.join(", "));
         }
 
-        function updateStatus(msg, active = false) {
-            const statusEl = document.getElementById('status');
-            statusEl.innerHTML = `Durum: <span class="${active ? 'mic-active' : ''}">${msg}</span>`;
+        function handleAnswer(index) {
+            if (!waitingForAnswer) return;
+            waitingForAnswer = false;
+            
+            const correct = questions[currentQuestionIndex].correct;
+            if (index === correct) {
+                speak("Tebrikler, doğru cevap!", nextQuestion);
+            } else {
+                speak("Maalesef yanlış. Doğru cevap: " + questions[currentQuestionIndex].a[correct], nextQuestion);
+            }
         }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                setTimeout(loadQuestion, 1000);
+            } else {
+                speak("Test tamamlandı. Harika iş çıkardın.");
+                document.getElementById('quizPanel').classList.add('hidden');
+            }
+        }
+
+        // --- SES TANIMA ---
+        recognition.onresult = (event) => {
+            const result = event.results[event.results.length - 1][0].transcript.toLowerCase();
+            console.log("Duyulan:", result);
+
+            if (result.includes("başla") || result.includes("test yap")) {
+                loadQuestion();
+            }
+
+            // Şık kontrolü (A, B, C, D veya metin olarak)
+            if (waitingForAnswer) {
+                if (result.includes("a şıkkı") || result.includes("birinci")) handleAnswer(0);
+                else if (result.includes("b şıkkı") || result.includes("ikinci")) handleAnswer(1);
+                else if (result.includes("c şıkkı") || result.includes("üçüncü")) handleAnswer(2);
+                else if (result.includes("d şıkkı") || result.includes("dördüncü")) handleAnswer(3);
+            }
+        };
+
+        recognition.onend = () => {
+            if (isListening) recognition.start(); // Bağlantı koparsa otomatik tekrar başlat
+        };
+
+        document.getElementById('startBtn').onclick = () => {
+            isListening = true;
+            recognition.start();
+            document.getElementById('micIcon').classList.add('mic-active');
+            document.getElementById('statusText').innerText = "Dinliyorum...";
+            speak("Asistan hazır. Teste başlamak için 'başla' diyebilirsin.");
+        };
     </script>
 </body>
 </html>

@@ -1,27 +1,44 @@
-const CACHE_NAME = 'pamuk-v14';
-const ASSETS = [
-  './index.html',
-  './manifest.json',
-  './icon-512.png'
+const CACHE_NAME = 'ai-assistant-v16';
+const ASSETS_TO_CACHE = [
+  'index.html',
+  'manifest.json',
+  'sw.js',
+  'icon-512.png'
 ];
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+// Service Worker Yükleme (Install) - Varlıkları Önbelleğe Al
+self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Yeni versiyonun hemen aktif olmasını sağlar
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Önbellek oluşturuluyor: ' + CACHE_NAME);
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+// Service Worker Aktivasyon (Activate) - Eski Önbellekleri Temizle
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Eski önbellek siliniyor:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+// Fetch İsteklerini Yönet - Önce Önbellek, Yoksa Ağ (Offline Destek)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      // Eğer önbellekte varsa onu döndür, yoksa ağdan getir
+      return response || fetch(event.request);
+    })
   );
 });

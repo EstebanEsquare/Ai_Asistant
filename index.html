@@ -2,213 +2,218 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Asistan Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Pamuk Öğretmen v13</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
     <style>
-        :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --primary: #03dac6;
-            --accent: #bb86fc;
-            --text: #ffffff;
-            --error: #cf6679;
-        }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        /* Sol Panel: Asistan Durumu */
-        .assistant-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-right: 1px solid #333;
-            padding: 20px;
-        }
-        .mic-status {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(3, 218, 198, 0.3);
-            transition: all 0.3s;
-        }
-        .mic-active {
-            animation: pulse 1.5s infinite;
-            background: var(--accent);
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(187, 134, 252, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(187, 134, 252, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(187, 134, 252, 0); }
-        }
+        :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
+        
+        .app-shell { display: flex; height: 100vh; width: 100vw; position: relative; }
+        .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
 
-        /* Sağ Panel: Test Arayüzü */
-        .quiz-panel {
-            flex: 1.5;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: #161616;
-        }
-        .question-box {
-            font-size: 1.4rem;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-        .options-container {
-            display: grid;
-            gap: 15px;
-        }
-        .option-btn {
-            background: var(--card);
-            border: 2px solid #333;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            text-align: left;
-            font-size: 1.1rem;
-            cursor: pointer;
-            min-height: 55px;
-            transition: 0.2s;
-        }
-        .option-btn:active, .option-btn.selected {
-            background: var(--primary);
-            color: black;
-            border-color: var(--primary);
-        }
+        .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
+        #cat-svg { width: 80%; max-width: 350px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
+
+        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
+        #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
+        
+        .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
+        .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
+        .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
+
+        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
+
+        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .setup-card { background: var(--card); padding: 30px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; overflow-y: auto; max-height: 90vh; }
+        
+        label { display: block; text-align: left; margin: 10px 0 5px 10px; font-size: 0.9rem; color: var(--accent); }
+        input, select { width: 100%; padding: 15px; margin: 5px 0 15px 0; border-radius: 14px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1rem; }
+        .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        input[type="range"] { flex: 1; accent-color: var(--accent); }
+
+        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="assistant-panel">
-        <div id="micIcon" class="mic-status">🎤</div>
-        <div id="statusText">Dinlemeye başlamak için dokunun</div>
-        <button id="startBtn" style="margin-top:20px; padding: 10px 20px; border-radius: 20px;">Sürekli Dinlemeyi Başlat</button>
-    </div>
+<div id="onboarding">
+    <div class="setup-card">
+        <h2 id="st-title">Pamuk Ayarları ⚙️</h2>
+        <div id="api-panel">
+            <input type="password" id="key-primary" placeholder="Ana API Anahtarı">
+            <select id="voice-select"><option value="">Sesler Hazırlanıyor...</option></select>
+            
+            <label>Konuşma Hızı</label>
+            <div class="range-wrap">
+                <input type="range" id="rate-range" min="0.5" max="1.5" step="0.1" value="1.0">
+            </div>
+            
+            <label>Ses Tonu (Pitch)</label>
+            <div class="range-wrap">
+                <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1.0">
+            </div>
 
-    <div class="quiz-panel hidden" id="quizPanel">
-        <div class="question-box" id="questionText">Soru yükleniyor...</div>
-        <div class="options-container" id="optionsGrid">
-            <!-- Şıklar buraya gelecek -->
+            <button class="btn-action" style="background:#2d2d35; color:white; margin-bottom:10px;" onclick="testVoice()">Sesi Dene</button>
+            <button class="btn-action" onclick="saveConfig()">Kaydet ve Başlat</button>
+        </div>
+        <div id="profile-panel" class="hidden">
+            <p id="q-text" style="color: var(--accent); font-weight: bold;"></p>
+            <input type="text" id="q-input" placeholder="Cevabınız...">
+            <button class="btn-action" onclick="nextProfileStep()">İlerle</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        const synth = window.speechSynthesis;
+<div class="app-shell">
+    <button class="settings-trigger" onclick="openSettings()">⚙️</button>
+    <div class="char-pane">
+        <div id="cat-svg">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="100" cy="110" r="85" fill="#ffffff" />
+                <path d="M45 55 L15 5 L65 40 Z" fill="#ffffff" />
+                <path d="M155 55 L185 5 L135 40 Z" fill="#ffffff" />
+                <circle cx="70" cy="100" r="10" fill="#1a1a1a" />
+                <circle cx="130" cy="100" r="10" fill="#1a1a1a" />
+                <path d="M96 120 Q100 128 104 120" fill="#ffb6c1" />
+                <path id="mouth" d="M85 140 Q100 140 115 140" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
+            </svg>
+        </div>
+    </div>
+    <div class="chat-pane">
+        <div id="chat-window"></div>
+        <button class="btn-mic" id="mic-btn">🎤</button>
+    </div>
+</div>
+
+<script>
+    let synth = window.speechSynthesis;
+    let voices = [];
+    let selectedVoice = null;
+    let p = JSON.parse(localStorage.getItem('p_v13_prof')) || {};
+    let k1 = localStorage.getItem('p_v13_k1');
+    let step = 0;
+    const qs = ["Adın?", "Yaşın?", "Cinsiyet?", "Sınıf?"], ks = ["name", "age", "gender", "grade"];
+
+    function loadVoices() {
+        voices = synth.getVoices().filter(v => v.lang.includes('tr-TR'));
+        const vSelect = document.getElementById('voice-select');
+        if(!vSelect) return;
+        vSelect.innerHTML = '';
+        voices.forEach((v, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = v.name;
+            vSelect.appendChild(opt);
+        });
+        // Kayıtlı ses varsa seç
+        const savedVoiceName = localStorage.getItem('p_v13_voice_name');
+        if(savedVoiceName) {
+            const foundIdx = voices.findIndex(v => v.name === savedVoiceName);
+            if(foundIdx !== -1) vSelect.value = foundIdx;
+        }
+    }
+
+    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+
+    function testVoice() {
+        updateVoiceParams();
+        speak("Merhaba, yeni ses ayarlarım bu şekilde. Sence nasıl?");
+    }
+
+    function updateVoiceParams() {
+        const vIdx = document.getElementById('voice-select').value;
+        selectedVoice = voices[vIdx];
+    }
+
+    function saveConfig() {
+        k1 = document.getElementById('key-primary').value.trim();
+        updateVoiceParams();
+        if(!k1) return alert("API anahtarı gerekli.");
         
-        recognition.lang = 'tr-TR';
-        recognition.continuous = true; // Kesintisiz dinleme
-        recognition.interimResults = false;
+        localStorage.setItem('p_v13_k1', k1);
+        localStorage.setItem('p_v13_voice_name', selectedVoice ? selectedVoice.name : '');
+        localStorage.setItem('p_v13_rate', document.getElementById('rate-range').value);
+        localStorage.setItem('p_v13_pitch', document.getElementById('pitch-range').value);
+        
+        document.getElementById('api-panel').classList.add('hidden');
+        document.getElementById('profile-panel').classList.remove('hidden');
+        askProfile();
+    }
 
-        let isListening = false;
-        let currentQuestionIndex = 0;
-        let waitingForAnswer = false;
+    function speak(text) {
+        synth.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.voice = selectedVoice || voices[0];
+        u.lang = 'tr-TR';
+        u.rate = parseFloat(localStorage.getItem('p_v13_rate') || 1.0);
+        u.pitch = parseFloat(localStorage.getItem('p_v13_pitch') || 1.0);
+        
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
+        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
+        synth.speak(u);
+    }
 
-        const questions = [
-            { q: "PMP terminolojisinde, 'Kritik Yol' projenin neyini belirler?", a: ["Bütçeyi", "Minimum süreyi", "Riskleri", "Kaliteyi"], correct: 1 },
-            { q: "Bir mekanik tasarımda, emniyet katsayısı hangisinden büyüktür?", a: ["0", "0.5", "1", "10"], correct: 2 }
-        ];
+    function askProfile() { document.getElementById('q-text').innerText = qs[step]; speak(qs[step]); }
 
-        // --- SES YÖNETİMİ ---
-        function speak(text, callback) {
-            synth.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            // Gemini benzeri ses seçimi (Android Google sesleri genellikle en iyisidir)
-            const voices = synth.getVoices();
-            utter.voice = voices.find(v => v.name.includes('Google') && v.lang === 'tr-TR') || voices[0];
-            utter.rate = 1.0;
-            utter.onend = () => { if(callback) callback(); };
-            synth.speak(utter);
+    function nextProfileStep() {
+        const val = document.getElementById('q-input').value.trim();
+        if(!val) return;
+        p[ks[step]] = val;
+        document.getElementById('q-input').value = "";
+        step++;
+        if(step < qs.length) askProfile();
+        else {
+            localStorage.setItem('p_v13_prof', JSON.stringify(p));
+            document.getElementById('onboarding').classList.add('hidden');
+            greet();
         }
+    }
 
-        // --- TEST MANTIĞI ---
-        function loadQuestion() {
-            waitingForAnswer = true;
-            const data = questions[currentQuestionIndex];
-            document.getElementById('quizPanel').classList.remove('hidden');
-            document.getElementById('questionText').innerText = data.q;
-            const grid = document.getElementById('optionsGrid');
-            grid.innerHTML = '';
-            
-            data.a.forEach((opt, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = `${String.fromCharCode(65 + index)}: ${opt}`;
-                btn.onclick = () => handleAnswer(index);
-                grid.appendChild(btn);
+    function openSettings() {
+        document.getElementById('onboarding').classList.remove('hidden');
+        document.getElementById('api-panel').classList.remove('hidden');
+        document.getElementById('profile-panel').classList.add('hidden');
+    }
+
+    function greet() { const m = `Selam ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`; addB(m, 'ai'); speak(m); }
+    function addB(t, cl) {
+        const w = document.getElementById('chat-window'), b = document.createElement('div');
+        b.className = `bubble ${cl}`; b.innerText = t;
+        w.appendChild(b); w.scrollTop = w.scrollHeight;
+    }
+
+    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.lang = 'tr-TR';
+    document.getElementById('mic-btn').onclick = () => rec.start();
+    rec.onresult = (e) => { const t = e.results[0][0].transcript; addB(t, 'user'); callAI(t); };
+
+    async function callAI(text) {
+        // AI'ya daha doğal cümleler kurması için talimat ekledim
+        const prompt = `Sen samimi bir ilkokul öğretmenisin. Adın Pamuk. Karşındaki çocuk ${p.name}, ${p.grade}. sınıfta. Robotik olmayan, günlük konuşma diline yakın, kısa ve sevgi dolu bir cevap ver. Soru: ${text}`;
+        
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k1}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
-            speak(data.q + ". Şıklar şöyle: " + data.a.join(", "));
+            const data = await res.json();
+            const reply = data.candidates[0].content.parts[0].text;
+            addB(reply, 'ai'); speak(reply);
+        } catch (e) {
+            addB("Bir sorun oluştu, anahtarını kontrol eder misin?", 'ai');
         }
+    }
 
-        function handleAnswer(index) {
-            if (!waitingForAnswer) return;
-            waitingForAnswer = false;
-            
-            const correct = questions[currentQuestionIndex].correct;
-            if (index === correct) {
-                speak("Tebrikler, doğru cevap!", nextQuestion);
-            } else {
-                speak("Maalesef yanlış. Doğru cevap: " + questions[currentQuestionIndex].a[correct], nextQuestion);
-            }
-        }
-
-        function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
-                setTimeout(loadQuestion, 1000);
-            } else {
-                speak("Test tamamlandı. Harika iş çıkardın.");
-                document.getElementById('quizPanel').classList.add('hidden');
-            }
-        }
-
-        // --- SES TANIMA ---
-        recognition.onresult = (event) => {
-            const result = event.results[event.results.length - 1][0].transcript.toLowerCase();
-            console.log("Duyulan:", result);
-
-            if (result.includes("başla") || result.includes("test yap")) {
-                loadQuestion();
-            }
-
-            // Şık kontrolü (A, B, C, D veya metin olarak)
-            if (waitingForAnswer) {
-                if (result.includes("a şıkkı") || result.includes("birinci")) handleAnswer(0);
-                else if (result.includes("b şıkkı") || result.includes("ikinci")) handleAnswer(1);
-                else if (result.includes("c şıkkı") || result.includes("üçüncü")) handleAnswer(2);
-                else if (result.includes("d şıkkı") || result.includes("dördüncü")) handleAnswer(3);
-            }
-        };
-
-        recognition.onend = () => {
-            if (isListening) recognition.start(); // Bağlantı koparsa otomatik tekrar başlat
-        };
-
-        document.getElementById('startBtn').onclick = () => {
-            isListening = true;
-            recognition.start();
-            document.getElementById('micIcon').classList.add('mic-active');
-            document.getElementById('statusText').innerText = "Dinliyorum...";
-            speak("Asistan hazır. Teste başlamak için 'başla' diyebilirsin.");
-        };
-    </script>
+    window.onload = () => {
+        setTimeout(loadVoices, 600);
+        if(k1 && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); }
+    };
+</script>
 </body>
 </html>

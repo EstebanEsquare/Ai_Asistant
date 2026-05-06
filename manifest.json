@@ -1,13 +1,11 @@
 {
-  "name": "Pamuk: AI Eğitmenim",
-  "short_name": "Pamuk",
-  "id": "./",
-  "start_url": "./index.html",
-  "scope": "./",
+  "name": "AI Öğretmen Asistan",
+  "short_name": "AI Öğretmen",
+  "description": "Sürekli dinleyen ve kibar bir öğretmen tonuyla yanıt veren AI PWA Asistanı.",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#0d0d0f",
-  "theme_color": "#c38fff",
-  "orientation": "any",
+  "background_color": "#121212",
+  "theme_color": "#6200ea",
   "icons": [
     {
       "src": "icon-512.png",

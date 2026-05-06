@@ -2,218 +2,234 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk Öğretmen v13</title>
+    <!-- Mobil optimizasyon ve native his için zorunlu viewport ayarı -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Asistan - Öğretmen Modu</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; overflow: hidden; }
-        
-        .app-shell { display: flex; height: 100vh; width: 100vw; position: relative; }
-        .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
+        /* Modern, Dark Mode Temalı UI */
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary-color: #6200ea;
+            --primary-hover: #7c4dff;
+            --danger-color: #cf6679;
+        }
 
-        .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
-        #cat-svg { width: 80%; max-width: 350px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Native his için kaydırmayı engelle */
+        }
 
-        .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
-        #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
-        
-        .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
-        .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
-        .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
+        #chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 85%;
+            line-height: 1.4;
+        }
 
-        #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .setup-card { background: var(--card); padding: 30px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; overflow-y: auto; max-height: 90vh; }
-        
-        label { display: block; text-align: left; margin: 10px 0 5px 10px; font-size: 0.9rem; color: var(--accent); }
-        input, select { width: 100%; padding: 15px; margin: 5px 0 15px 0; border-radius: 14px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1rem; }
-        .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
-        input[type="range"] { flex: 1; accent-color: var(--accent); }
+        .user-msg {
+            background-color: #2c2c2c;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
 
-        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
-        .hidden { display: none !important; }
+        .ai-msg {
+            background-color: var(--primary-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+
+        #controls {
+            padding: 20px;
+            background-color: #1e1e1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #333;
+        }
+
+        /* Dokunmatik hedefler için en az 44x44px kuralı */
+        #mic-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #mic-btn:active {
+            transform: scale(0.95);
+        }
+
+        #mic-btn.listening {
+            background-color: var(--danger-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(207, 102, 121, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(207, 102, 121, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(207, 102, 121, 0); }
+        }
     </style>
 </head>
 <body>
 
-<div id="onboarding">
-    <div class="setup-card">
-        <h2 id="st-title">Pamuk Ayarları ⚙️</h2>
-        <div id="api-panel">
-            <input type="password" id="key-primary" placeholder="Ana API Anahtarı">
-            <select id="voice-select"><option value="">Sesler Hazırlanıyor...</option></select>
+    <div id="chat-container">
+        <div class="message ai-msg">Merhaba, ben dijital öğretmeninizim. Size nasıl yardımcı olabilirim?</div>
+    </div>
+
+    <div id="controls">
+        <button id="mic-btn">🎤</button>
+    </div>
+
+    <script>
+        // PWA Service Worker Kaydı
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker kayıtlı.', reg))
+                .catch(err => console.error('Service Worker hatası:', err));
+        }
+
+        // DOM Elementleri
+        const micBtn = document.getElementById('mic-btn');
+        const chatContainer = document.getElementById('chat-container');
+
+        // Web Speech API Tanımlamaları
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const synth = window.speechSynthesis;
+        let recognition;
+        let isListening = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            // Sürekli dinleme (continuous) aktif. Sadece butona basıldığında kapanır.
+            recognition.continuous = true; 
+            recognition.interimResults = false;
+            recognition.lang = 'tr-TR';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micBtn.classList.add('listening');
+                micBtn.textContent = '🛑'; // Dinliyor ikonu
+            };
+
+            recognition.onresult = (event) => {
+                // Son söyleneni al
+                const current = event.resultIndex;
+                const transcript = event.results[current][0].transcript;
+                
+                addMessage(transcript, 'user-msg');
+                processWithAI(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Ses tanıma hatası:', event.error);
+                if(event.error === 'not-allowed') {
+                    stopListening();
+                    alert("Mikrofon izni reddedildi.");
+                }
+            };
+
+            recognition.onend = () => {
+                // Eğer kullanıcı manuel kapatmadıysa, sistem kapatsa bile geri aç (continuous loop)
+                if (isListening) {
+                    recognition.start();
+                } else {
+                    micBtn.classList.remove('listening');
+                    micBtn.textContent = '🎤';
+                }
+            };
+        } else {
+            alert("Tarayıcınız Web Speech API'yi desteklemiyor.");
+        }
+
+        function toggleListening() {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            // DİNLEMEYE BAŞLARKEN ASİSTANIN CEVABINI BÖL (İptal et)
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            isListening = true;
+            recognition.start();
+        }
+
+        function stopListening() {
+            isListening = false;
+            recognition.stop();
+        }
+
+        micBtn.addEventListener('click', toggleListening);
+
+        function addMessage(text, className) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${className}`;
+            msgDiv.textContent = text;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // AI İşlem Fonksiyonu (Buraya kendi API çağrınızı entegre edebilirsiniz)
+        async function processWithAI(text) {
+            /* 
+             * YAPAY ZEKA KİŞİLİK AYARI (Sistem İstemi - System Prompt)
+             * AI API'nize istek atarken şu sistem komutunu gönderin:
+             * "Sen kibar, sabırlı ve profesyonel bir öğretmensin. 
+             * 'Canım', 'kızım', 'tatlım' gibi abartılı, aşırı samimi veya laubali hitaplar KULLANMA. 
+             * Yanıtların net, saygılı, bilgi verici ve doğrudan olsun."
+             */
+
+            // Simüle edilmiş AI API Cevabı
+            const mockAIResponse = `Söylediklerini anladım. Bir öğretmen olarak sana şu şekilde yardımcı olabilirim: "${text}" konusu üzerinde çalışmaya devam etmeliyiz.`;
             
-            <label>Konuşma Hızı</label>
-            <div class="range-wrap">
-                <input type="range" id="rate-range" min="0.5" max="1.5" step="0.1" value="1.0">
-            </div>
+            addMessage(mockAIResponse, 'ai-msg');
+            speakText(mockAIResponse);
+        }
+
+        function speakText(text) {
+            // Eğer yeni bir şey söylenecekse öncekini sustur (Cevap bölme mantığı)
+            synth.cancel(); 
             
-            <label>Ses Tonu (Pitch)</label>
-            <div class="range-wrap">
-                <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1.0">
-            </div>
-
-            <button class="btn-action" style="background:#2d2d35; color:white; margin-bottom:10px;" onclick="testVoice()">Sesi Dene</button>
-            <button class="btn-action" onclick="saveConfig()">Kaydet ve Başlat</button>
-        </div>
-        <div id="profile-panel" class="hidden">
-            <p id="q-text" style="color: var(--accent); font-weight: bold;"></p>
-            <input type="text" id="q-input" placeholder="Cevabınız...">
-            <button class="btn-action" onclick="nextProfileStep()">İlerle</button>
-        </div>
-    </div>
-</div>
-
-<div class="app-shell">
-    <button class="settings-trigger" onclick="openSettings()">⚙️</button>
-    <div class="char-pane">
-        <div id="cat-svg">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="100" cy="110" r="85" fill="#ffffff" />
-                <path d="M45 55 L15 5 L65 40 Z" fill="#ffffff" />
-                <path d="M155 55 L185 5 L135 40 Z" fill="#ffffff" />
-                <circle cx="70" cy="100" r="10" fill="#1a1a1a" />
-                <circle cx="130" cy="100" r="10" fill="#1a1a1a" />
-                <path d="M96 120 Q100 128 104 120" fill="#ffb6c1" />
-                <path id="mouth" d="M85 140 Q100 140 115 140" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
-            </svg>
-        </div>
-    </div>
-    <div class="chat-pane">
-        <div id="chat-window"></div>
-        <button class="btn-mic" id="mic-btn">🎤</button>
-    </div>
-</div>
-
-<script>
-    let synth = window.speechSynthesis;
-    let voices = [];
-    let selectedVoice = null;
-    let p = JSON.parse(localStorage.getItem('p_v13_prof')) || {};
-    let k1 = localStorage.getItem('p_v13_k1');
-    let step = 0;
-    const qs = ["Adın?", "Yaşın?", "Cinsiyet?", "Sınıf?"], ks = ["name", "age", "gender", "grade"];
-
-    function loadVoices() {
-        voices = synth.getVoices().filter(v => v.lang.includes('tr-TR'));
-        const vSelect = document.getElementById('voice-select');
-        if(!vSelect) return;
-        vSelect.innerHTML = '';
-        voices.forEach((v, i) => {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = v.name;
-            vSelect.appendChild(opt);
-        });
-        // Kayıtlı ses varsa seç
-        const savedVoiceName = localStorage.getItem('p_v13_voice_name');
-        if(savedVoiceName) {
-            const foundIdx = voices.findIndex(v => v.name === savedVoiceName);
-            if(foundIdx !== -1) vSelect.value = foundIdx;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'tr-TR';
+            utterance.rate = 1.0;
+            // Öğretmen tonuna uygun olması adına sesi bir tık kalınlaştırıp yavaşlatabilirsiniz.
+            utterance.pitch = 0.9; 
+            
+            synth.speak(utterance);
         }
-    }
-
-    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
-
-    function testVoice() {
-        updateVoiceParams();
-        speak("Merhaba, yeni ses ayarlarım bu şekilde. Sence nasıl?");
-    }
-
-    function updateVoiceParams() {
-        const vIdx = document.getElementById('voice-select').value;
-        selectedVoice = voices[vIdx];
-    }
-
-    function saveConfig() {
-        k1 = document.getElementById('key-primary').value.trim();
-        updateVoiceParams();
-        if(!k1) return alert("API anahtarı gerekli.");
-        
-        localStorage.setItem('p_v13_k1', k1);
-        localStorage.setItem('p_v13_voice_name', selectedVoice ? selectedVoice.name : '');
-        localStorage.setItem('p_v13_rate', document.getElementById('rate-range').value);
-        localStorage.setItem('p_v13_pitch', document.getElementById('pitch-range').value);
-        
-        document.getElementById('api-panel').classList.add('hidden');
-        document.getElementById('profile-panel').classList.remove('hidden');
-        askProfile();
-    }
-
-    function speak(text) {
-        synth.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.voice = selectedVoice || voices[0];
-        u.lang = 'tr-TR';
-        u.rate = parseFloat(localStorage.getItem('p_v13_rate') || 1.0);
-        u.pitch = parseFloat(localStorage.getItem('p_v13_pitch') || 1.0);
-        
-        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
-        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
-        synth.speak(u);
-    }
-
-    function askProfile() { document.getElementById('q-text').innerText = qs[step]; speak(qs[step]); }
-
-    function nextProfileStep() {
-        const val = document.getElementById('q-input').value.trim();
-        if(!val) return;
-        p[ks[step]] = val;
-        document.getElementById('q-input').value = "";
-        step++;
-        if(step < qs.length) askProfile();
-        else {
-            localStorage.setItem('p_v13_prof', JSON.stringify(p));
-            document.getElementById('onboarding').classList.add('hidden');
-            greet();
-        }
-    }
-
-    function openSettings() {
-        document.getElementById('onboarding').classList.remove('hidden');
-        document.getElementById('api-panel').classList.remove('hidden');
-        document.getElementById('profile-panel').classList.add('hidden');
-    }
-
-    function greet() { const m = `Selam ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`; addB(m, 'ai'); speak(m); }
-    function addB(t, cl) {
-        const w = document.getElementById('chat-window'), b = document.createElement('div');
-        b.className = `bubble ${cl}`; b.innerText = t;
-        w.appendChild(b); w.scrollTop = w.scrollHeight;
-    }
-
-    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    rec.lang = 'tr-TR';
-    document.getElementById('mic-btn').onclick = () => rec.start();
-    rec.onresult = (e) => { const t = e.results[0][0].transcript; addB(t, 'user'); callAI(t); };
-
-    async function callAI(text) {
-        // AI'ya daha doğal cümleler kurması için talimat ekledim
-        const prompt = `Sen samimi bir ilkokul öğretmenisin. Adın Pamuk. Karşındaki çocuk ${p.name}, ${p.grade}. sınıfta. Robotik olmayan, günlük konuşma diline yakın, kısa ve sevgi dolu bir cevap ver. Soru: ${text}`;
-        
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k1}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            const data = await res.json();
-            const reply = data.candidates[0].content.parts[0].text;
-            addB(reply, 'ai'); speak(reply);
-        } catch (e) {
-            addB("Bir sorun oluştu, anahtarını kontrol eder misin?", 'ai');
-        }
-    }
-
-    window.onload = () => {
-        setTimeout(loadVoices, 600);
-        if(k1 && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); }
-    };
-</script>
+    </script>
 </body>
 </html>

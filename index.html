@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk Öğretmen v13</title>
+    <title>Pamuk Öğretmen v14</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
@@ -16,7 +16,7 @@
         .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
 
         .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
-        #cat-svg { width: 80%; max-width: 350px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
+        #teacher-svg { width: 80%; max-width: 320px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
 
         .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
         #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
@@ -25,8 +25,13 @@
         .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
         .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
 
-        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); }
+        /* Mic button states */
+        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); transition: background 0.3s, transform 0.15s; }
+        .btn-mic.listening { background: #ff5c5c; animation: pulse-mic 1s infinite; }
+        .btn-mic.blocked { background: #555; cursor: not-allowed; }
+        @keyframes pulse-mic { 0%,100%{ box-shadow: 0 0 0 0 rgba(255,92,92,0.5);} 50%{ box-shadow: 0 0 0 14px rgba(255,92,92,0);} }
 
+        /* Onboarding */
         #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .setup-card { background: var(--card); padding: 30px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; overflow-y: auto; max-height: 90vh; }
 
@@ -35,8 +40,20 @@
         .range-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         input[type="range"] { flex: 1; accent-color: var(--accent); }
 
-        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; }
+        .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; font-size: 1rem; }
+
+        /* Gender & Grade selection buttons */
+        .choice-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .choice-btn { flex: 1; padding: 14px; border-radius: 14px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .choice-btn.selected { border-color: var(--accent); background: rgba(195,143,255,0.15); color: var(--accent); font-weight: 700; }
+
+        .grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .grade-group-label { grid-column: 1/-1; text-align: left; color: #888; font-size: 0.8rem; padding: 4px 0; }
+
         .hidden { display: none !important; }
+
+        /* Mic status label */
+        #mic-status { text-align: center; font-size: 0.75rem; color: #888; margin-top: 6px; min-height: 18px; }
     </style>
 </head>
 <body>
@@ -45,7 +62,10 @@
     <div class="setup-card">
         <h2 id="st-title">Pamuk Ayarları ⚙️</h2>
         <div id="api-panel">
+            <label>API Anahtarı</label>
             <input type="password" id="key-primary" placeholder="Ana API Anahtarı">
+
+            <label>Ses Seçimi</label>
             <select id="voice-select"><option value="">Sesler Hazırlanıyor...</option></select>
 
             <label>Konuşma Hızı</label>
@@ -58,13 +78,44 @@
                 <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1.0">
             </div>
 
-            <button class="btn-action" style="background:#2d2d35; color:white; margin-bottom:10px;" onclick="testVoice()">Sesi Dene</button>
+            <button class="btn-action" style="background:#2d2d35; color:white; margin-bottom:10px;" onclick="testVoice()">Sesi Dene 🔊</button>
             <button class="btn-action" onclick="saveConfig()">Kaydet ve Başlat</button>
         </div>
+
         <div id="profile-panel" class="hidden">
-            <p id="q-text" style="color: var(--accent); font-weight: bold;"></p>
-            <input type="text" id="q-input" placeholder="Cevabınız...">
-            <button class="btn-action" onclick="nextProfileStep()">İlerle</button>
+            <!-- Step 1: Name -->
+            <div id="step-name">
+                <p style="color: var(--accent); font-weight: bold;">Adın ne?</p>
+                <input type="text" id="q-name" placeholder="Adını yaz...">
+                <button class="btn-action" onclick="goToGender()">İlerle →</button>
+            </div>
+
+            <!-- Step 2: Gender -->
+            <div id="step-gender" class="hidden">
+                <p style="color: var(--accent); font-weight: bold;">Cinsiyetin?</p>
+                <div class="choice-group">
+                    <button class="choice-btn" id="btn-kiz" onclick="selectGender('Kız')">👧 Kız</button>
+                    <button class="choice-btn" id="btn-erkek" onclick="selectGender('Erkek')">👦 Erkek</button>
+                </div>
+                <button class="btn-action" onclick="goToGrade()">İlerle →</button>
+            </div>
+
+            <!-- Step 3: Grade -->
+            <div id="step-grade" class="hidden">
+                <p style="color: var(--accent); font-weight: bold;">Kaçıncı sınıftasın?</p>
+                <div class="grade-grid">
+                    <div class="grade-group-label">📚 İlkokul</div>
+                    <button class="choice-btn" onclick="selectGrade('İlkokul 1. Sınıf')">1. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('İlkokul 2. Sınıf')">2. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('İlkokul 3. Sınıf')">3. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('İlkokul 4. Sınıf')">4. Sınıf</button>
+                    <div class="grade-group-label">🏫 Ortaokul</div>
+                    <button class="choice-btn" onclick="selectGrade('Ortaokul 5. Sınıf')">5. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('Ortaokul 6. Sınıf')">6. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('Ortaokul 7. Sınıf')">7. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade('Ortaokul 8. Sınıf')">8. Sınıf</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -72,37 +123,166 @@
 <div class="app-shell">
     <button class="settings-trigger" onclick="openSettings()">⚙️</button>
     <div class="char-pane">
-        <div id="cat-svg">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="100" cy="110" r="85" fill="#ffffff" />
-                <path d="M45 55 L15 5 L65 40 Z" fill="#ffffff" />
-                <path d="M155 55 L185 5 L135 40 Z" fill="#ffffff" />
-                <circle cx="70" cy="100" r="10" fill="#1a1a1a" />
-                <circle cx="130" cy="100" r="10" fill="#1a1a1a" />
-                <path d="M96 120 Q100 128 104 120" fill="#ffb6c1" />
-                <path id="mouth" d="M85 140 Q100 140 115 140" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round" />
-            </svg>
-        </div>
+        <!-- Sarı saçlı bayan öğretmen SVG -->
+        <svg id="teacher-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+            <!-- Gövde / Elbise -->
+            <ellipse cx="100" cy="210" rx="52" ry="55" fill="#7c4dff"/>
+            <!-- Yaka detayı -->
+            <path d="M80 165 Q100 180 120 165 L115 195 Q100 185 85 195 Z" fill="#5c35cc"/>
+            <!-- Boyun -->
+            <rect x="90" y="148" width="20" height="22" rx="8" fill="#f5c5a3"/>
+            <!-- Baş -->
+            <ellipse cx="100" cy="128" rx="38" ry="42" fill="#f5c5a3"/>
+            <!-- Saç - arka -->
+            <ellipse cx="100" cy="110" rx="40" ry="44" fill="#f0c030"/>
+            <!-- Saç - üst ve yanlar -->
+            <path d="M62 120 Q55 80 75 60 Q100 45 125 60 Q145 80 138 120" fill="#f0c030"/>
+            <!-- Saç dalgaları sol -->
+            <path d="M63 130 Q52 155 58 175 Q65 165 68 150 Q66 140 63 130Z" fill="#e8b820"/>
+            <!-- Saç dalgaları sağ -->
+            <path d="M137 130 Q148 155 142 175 Q135 165 132 150 Q134 140 137 130Z" fill="#e8b820"/>
+            <!-- Saç bantı / vurgu -->
+            <path d="M68 98 Q100 88 132 98" stroke="#e8b820" stroke-width="3" fill="none"/>
+            <!-- Alın üstü saç detayı -->
+            <path d="M78 72 Q92 65 100 68 Q108 65 122 72" stroke="#d4a010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Gözler -->
+            <ellipse cx="85" cy="122" rx="7" ry="7.5" fill="#fff"/>
+            <ellipse cx="115" cy="122" rx="7" ry="7.5" fill="#fff"/>
+            <circle cx="87" cy="123" r="4.5" fill="#3d2000"/>
+            <circle cx="117" cy="123" r="4.5" fill="#3d2000"/>
+            <!-- Göz parlaklığı -->
+            <circle cx="89" cy="121" r="1.5" fill="#fff"/>
+            <circle cx="119" cy="121" r="1.5" fill="#fff"/>
+            <!-- Kirpikler -->
+            <path d="M78 116 Q82 113 86 116" stroke="#3d2000" stroke-width="1.5" fill="none"/>
+            <path d="M114 116 Q118 113 122 116" stroke="#3d2000" stroke-width="1.5" fill="none"/>
+            <!-- Kaşlar -->
+            <path d="M79 113 Q85 109 91 112" stroke="#8b6000" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M109 112 Q115 109 121 113" stroke="#8b6000" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <!-- Burun -->
+            <path d="M97 128 Q100 134 103 128" stroke="#d4956a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <!-- Ağız -->
+            <path id="mouth" d="M88 142 Q100 148 112 142" stroke="#c0604a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- Yanak allığı -->
+            <ellipse cx="76" cy="135" rx="8" ry="5" fill="#ffb4a0" opacity="0.5"/>
+            <ellipse cx="124" cy="135" rx="8" ry="5" fill="#ffb4a0" opacity="0.5"/>
+            <!-- Kollar -->
+            <ellipse cx="56" cy="195" rx="14" ry="30" fill="#7c4dff" transform="rotate(-10,56,195)"/>
+            <ellipse cx="144" cy="195" rx="14" ry="30" fill="#7c4dff" transform="rotate(10,144,195)"/>
+            <!-- Eller -->
+            <ellipse cx="50" cy="222" rx="10" ry="12" fill="#f5c5a3"/>
+            <ellipse cx="150" cy="222" rx="10" ry="12" fill="#f5c5a3"/>
+            <!-- Kitap (sağ elde) -->
+            <rect x="138" y="218" width="28" height="20" rx="3" fill="#ff8a65"/>
+            <line x1="152" y1="218" x2="152" y2="238" stroke="#e65c35" stroke-width="1.5"/>
+        </svg>
     </div>
     <div class="chat-pane">
         <div id="chat-window"></div>
         <button class="btn-mic" id="mic-btn">🎤</button>
+        <div id="mic-status">Başlamak için mikrofona bas</div>
     </div>
 </div>
 
 <script>
+    /* ── State ── */
     let synth = window.speechSynthesis;
     let voices = [];
     let selectedVoice = null;
-    let p = JSON.parse(localStorage.getItem('p_v13_prof')) || {};
-    let k1 = localStorage.getItem('p_v13_k1');
-    let step = 0;
-    const qs = ["Adın?", "Yaşın?", "Cinsiyet?", "Sınıf?"], ks = ["name", "age", "gender", "grade"];
+    let p = JSON.parse(localStorage.getItem('p_v14_prof')) || {};
+    let k1 = localStorage.getItem('p_v14_k1');
+    let selectedGender = p.gender || null;
+    let selectedGradeVal = p.grade || null;
 
+    /* ── Mic State Machine ── */
+    let micActive = false;   // Bir kez aktif edildikten sonra true kalır
+    let teacherSpeaking = false;
+
+    /* ── Web Audio beep ── */
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.4);
+        } catch(e) {}
+    }
+
+    /* ── Speech Recognition ── */
+    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.lang = 'tr-TR';
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    function startListening() {
+        if (teacherSpeaking) return;
+        try {
+            rec.start();
+            setMicUI('listening');
+        } catch(e) {}
+    }
+
+    rec.onresult = (e) => {
+        const t = e.results[0][0].transcript;
+        addB(t, 'user');
+        setMicUI('blocked');
+        callAI(t);
+    };
+
+    rec.onend = () => {
+        if (!teacherSpeaking && micActive) {
+            setMicUI('ready');
+        }
+    };
+
+    rec.onerror = () => {
+        if (!teacherSpeaking && micActive) setMicUI('ready');
+    };
+
+    function setMicUI(state) {
+        const btn = document.getElementById('mic-btn');
+        const status = document.getElementById('mic-status');
+        btn.className = 'btn-mic';
+        if (state === 'listening') {
+            btn.classList.add('listening');
+            btn.textContent = '🔴';
+            status.textContent = 'Dinliyorum...';
+        } else if (state === 'blocked') {
+            btn.classList.add('blocked');
+            btn.textContent = '⏸️';
+            status.textContent = 'Öğretmen konuşuyor...';
+        } else if (state === 'ready') {
+            btn.textContent = '🎤';
+            status.textContent = 'Seni dinliyorum, konuş!';
+        } else {
+            btn.textContent = '🎤';
+            status.textContent = 'Başlamak için mikrofona bas';
+        }
+    }
+
+    /* İlk kez basınca aktif, sonra otomatik devam eder */
+    document.getElementById('mic-btn').onclick = () => {
+        if (!micActive) {
+            micActive = true;
+            startListening();
+        } else if (!teacherSpeaking) {
+            startListening();
+        }
+    };
+
+    /* ── Voices ── */
     function loadVoices() {
-        voices = synth.getVoices().filter(v => v.lang.includes('tr-TR'));
+        voices = synth.getVoices().filter(v => v.lang.startsWith('tr'));
+        if (!voices.length) voices = synth.getVoices(); // fallback
         const vSelect = document.getElementById('voice-select');
-        if(!vSelect) return;
+        if (!vSelect) return;
         vSelect.innerHTML = '';
         voices.forEach((v, i) => {
             const opt = document.createElement('option');
@@ -110,11 +290,10 @@
             opt.innerText = v.name;
             vSelect.appendChild(opt);
         });
-        // Kayıtlı ses varsa seç
-        const savedVoiceName = localStorage.getItem('p_v13_voice_name');
-        if(savedVoiceName) {
+        const savedVoiceName = localStorage.getItem('p_v14_voice_name');
+        if (savedVoiceName) {
             const foundIdx = voices.findIndex(v => v.name === savedVoiceName);
-            if(foundIdx !== -1) vSelect.value = foundIdx;
+            if (foundIdx !== -1) vSelect.value = foundIdx;
         }
     }
 
@@ -122,97 +301,171 @@
 
     function testVoice() {
         updateVoiceParams();
-        speak("Merhaba, yeni ses ayarlarım bu şekilde. Sence nasıl?");
+        speak("Merhaba! Ses ayarlarım bu şekilde, nasıl buluyorsun?");
     }
 
     function updateVoiceParams() {
         const vIdx = document.getElementById('voice-select').value;
-        selectedVoice = voices[vIdx];
+        selectedVoice = voices[vIdx] || voices[0] || null;
     }
 
-    function saveConfig() {
-        k1 = document.getElementById('key-primary').value.trim();
-        updateVoiceParams();
-        if(!k1) return alert("API anahtarı gerekli.");
-
-        localStorage.setItem('p_v13_k1', k1);
-        localStorage.setItem('p_v13_voice_name', selectedVoice ? selectedVoice.name : '');
-        localStorage.setItem('p_v13_rate', document.getElementById('rate-range').value);
-        localStorage.setItem('p_v13_pitch', document.getElementById('pitch-range').value);
-
-        document.getElementById('api-panel').classList.add('hidden');
-        document.getElementById('profile-panel').classList.remove('hidden');
-        askProfile();
-    }
-
+    /* ── Speak ── */
     function speak(text) {
         synth.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.voice = selectedVoice || voices[0];
-        u.lang = 'tr-TR';
-        u.rate = parseFloat(localStorage.getItem('p_v13_rate') || 1.0);
-        u.pitch = parseFloat(localStorage.getItem('p_v13_pitch') || 1.0);
+        teacherSpeaking = true;
+        setMicUI('blocked');
 
-        u.onstart = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 165 115 140');
-        u.onend = () => document.getElementById('mouth').setAttribute('d', 'M85 140 Q100 140 115 140');
+        const u = new SpeechSynthesisUtterance(text);
+        u.voice = selectedVoice || voices[0] || null;
+        u.lang = 'tr-TR';
+        u.rate = parseFloat(localStorage.getItem('p_v14_rate') || 1.0);
+        u.pitch = parseFloat(localStorage.getItem('p_v14_pitch') || 1.0);
+
+        u.onstart = () => {
+            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 154 112 142');
+        };
+        u.onend = () => {
+            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 148 112 142');
+            teacherSpeaking = false;
+            if (micActive) {
+                // Kısa gecikme sonrası bip + mikrofon aç
+                setTimeout(() => {
+                    playBeep();
+                    setTimeout(() => startListening(), 300);
+                }, 300);
+            }
+        };
+        u.onerror = () => {
+            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 148 112 142');
+            teacherSpeaking = false;
+            if (micActive) {
+                setTimeout(() => { playBeep(); startListening(); }, 400);
+            }
+        };
+
         synth.speak(u);
     }
 
-    function askProfile() { document.getElementById('q-text').innerText = qs[step]; speak(qs[step]); }
+    /* ── Onboarding ── */
+    function saveConfig() {
+        k1 = document.getElementById('key-primary').value.trim();
+        updateVoiceParams();
+        if (!k1) return alert("API anahtarı gerekli.");
 
-    function nextProfileStep() {
-        const val = document.getElementById('q-input').value.trim();
-        if(!val) return;
-        p[ks[step]] = val;
-        document.getElementById('q-input').value = "";
-        step++;
-        if(step < qs.length) askProfile();
-        else {
-            localStorage.setItem('p_v13_prof', JSON.stringify(p));
+        localStorage.setItem('p_v14_k1', k1);
+        localStorage.setItem('p_v14_voice_name', selectedVoice ? selectedVoice.name : '');
+        localStorage.setItem('p_v14_rate', document.getElementById('rate-range').value);
+        localStorage.setItem('p_v14_pitch', document.getElementById('pitch-range').value);
+
+        document.getElementById('api-panel').classList.add('hidden');
+        document.getElementById('profile-panel').classList.remove('hidden');
+        document.getElementById('step-name').classList.remove('hidden');
+        document.getElementById('step-gender').classList.add('hidden');
+        document.getElementById('step-grade').classList.add('hidden');
+        speak("Merhaba! Seni tanımak istiyorum. Önce adını söyler misin?");
+    }
+
+    function goToGender() {
+        const nameVal = document.getElementById('q-name').value.trim();
+        if (!nameVal) return alert("Lütfen adını yaz.");
+        p.name = nameVal;
+        document.getElementById('step-name').classList.add('hidden');
+        document.getElementById('step-gender').classList.remove('hidden');
+        speak("Harika! Şimdi cinsiyetini seçer misin?");
+    }
+
+    function selectGender(g) {
+        selectedGender = g;
+        document.querySelectorAll('#step-gender .choice-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById(g === 'Kız' ? 'btn-kiz' : 'btn-erkek').classList.add('selected');
+    }
+
+    function goToGrade() {
+        if (!selectedGender) return alert("Lütfen cinsiyetini seç.");
+        p.gender = selectedGender;
+        document.getElementById('step-gender').classList.add('hidden');
+        document.getElementById('step-grade').classList.remove('hidden');
+        speak("Güzel! Şimdi hangi sınıfta olduğunu seçelim.");
+    }
+
+    function selectGrade(g) {
+        selectedGradeVal = g;
+        p.grade = g;
+        document.querySelectorAll('#step-grade .choice-btn').forEach(b => b.classList.remove('selected'));
+        event.target.classList.add('selected');
+        // Kısa bekleme sonrası kaydet ve başlat
+        setTimeout(() => {
+            localStorage.setItem('p_v14_prof', JSON.stringify(p));
             document.getElementById('onboarding').classList.add('hidden');
             greet();
-        }
+        }, 400);
     }
 
     function openSettings() {
         document.getElementById('onboarding').classList.remove('hidden');
         document.getElementById('api-panel').classList.remove('hidden');
         document.getElementById('profile-panel').classList.add('hidden');
+        // Mevcut anahtarı göster
+        if (k1) document.getElementById('key-primary').value = k1;
     }
 
-    function greet() { const m = `Selam ${p.name}! Bugün ${p.grade}. sınıf konularına bakmaya hazır mısın?`; addB(m, 'ai'); speak(m); }
+    /* ── Chat ── */
+    function greet() {
+        const hitap = p.gender === 'Kız' ? p.name : p.name;
+        const m = `Merhaba ${hitap}! ${p.grade} öğrencisi olduğunu öğrendim. Bugün hangi konuda çalışmak istersin?`;
+        addB(m, 'ai');
+        speak(m);
+    }
+
     function addB(t, cl) {
         const w = document.getElementById('chat-window'), b = document.createElement('div');
-        b.className = `bubble ${cl}`; b.innerText = t;
-        w.appendChild(b); w.scrollTop = w.scrollHeight;
+        b.className = `bubble ${cl}`;
+        b.innerText = t;
+        w.appendChild(b);
+        w.scrollTop = w.scrollHeight;
     }
 
-    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    rec.lang = 'tr-TR';
-    document.getElementById('mic-btn').onclick = () => rec.start();
-    rec.onresult = (e) => { const t = e.results[0][0].transcript; addB(t, 'user'); callAI(t); };
-
+    /* ── AI Call ── */
     async function callAI(text) {
-        // AI'ya daha doğal cümleler kurması için talimat ekledim
-        const prompt = `Sen samimi bir ilkokul öğretmenisin. Adın Pamuk. Karşındaki çocuk ${p.name}, ${p.grade}. sınıfta. Robotik olmayan, günlük konuşma diline yakın, kısa ve sevgi dolu bir cevap ver. Soru: ${text}`;
+        const pronoun = p.gender === 'Kız' ? 'kız öğrencin' : 'erkek öğrencin';
+        const prompt = `Sen deneyimli ve sıcakkanlı bir ilkokul/ortaokul öğretmenisin. Adın Pamuk Öğretmen.
+Karşındaki ${pronoun} adı ${p.name}, ${p.grade} öğrencisi.
+ÖNEMLİ KONUŞMA KURALLARI:
+- Öğrencine adıyla ya da sadece "sen" diye hitap et. "Canım", "tatlım", "kızım", "oğlum" gibi aşırı hitaplar KULLANMA.
+- Sevecen, teşvik edici ama sade ve doğal bir dil kullan.
+- Robotik değil, gerçek bir öğretmen gibi konuş.
+- Cevabı kısa ve anlaşılır tut.
+- Eğer soru varsa tek bir soruyla devam et.
+Öğrenci: ${text}`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k1}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${k1}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
-            const reply = data.candidates[0].content.parts[0].text;
-            addB(reply, 'ai'); speak(reply);
+            if (data.candidates && data.candidates[0]) {
+                const reply = data.candidates[0].content.parts[0].text;
+                addB(reply, 'ai');
+                speak(reply);
+            } else {
+                throw new Error('Boş yanıt');
+            }
         } catch (e) {
-            addB("Bir sorun oluştu, anahtarını kontrol eder misin?", 'ai');
+            const errMsg = "Bağlantıda bir sorun var. API anahtarını kontrol eder misin?";
+            addB(errMsg, 'ai');
+            speak(errMsg);
         }
     }
 
+    /* ── Init ── */
     window.onload = () => {
         setTimeout(loadVoices, 600);
-        if(k1 && p.grade) { document.getElementById('onboarding').classList.add('hidden'); greet(); }
+        if (k1 && p.grade) {
+            document.getElementById('onboarding').classList.add('hidden');
+            greet();
+        }
     };
 </script>
 </body>

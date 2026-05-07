@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Pamuk Öğretmen v14</title>
+    <title>Pamuk Öğretmen v15</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root { --bg: #0d0d0f; --card: #16161e; --accent: #c38fff; --text: #f0f0f5; }
@@ -15,23 +15,41 @@
         .app-shell { display: flex; height: 100vh; width: 100vw; position: relative; }
         .settings-trigger { position: absolute; top: 15px; right: 15px; z-index: 100; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
 
-        .char-pane { flex: 1.2; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%); border-right: 1px solid #2d2d35; }
-        #teacher-svg { width: 80%; max-width: 320px; filter: drop-shadow(0 0 20px rgba(195, 143, 255, 0.2)); }
+        .char-pane {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            background: radial-gradient(circle at center, #1e1b2e 0%, #0d0d0f 100%);
+            border-right: 1px solid #2d2d35;
+        }
+        #teacher-svg {
+            width: 78%;
+            max-width: 260px;
+            filter: drop-shadow(0 4px 24px rgba(195,143,255,0.25));
+        }
+        #teacher-name-label {
+            color: var(--accent);
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            opacity: 0.9;
+        }
 
         .chat-pane { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #0f0f14; }
         #chat-window { flex: 1; overflow-y: auto; background: var(--card); border-radius: 28px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 4px 30px rgba(0,0,0,0.6); }
 
         .bubble { padding: 16px 20px; border-radius: 22px; max-width: 85%; font-size: 1rem; line-height: 1.6; }
-        .ai { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
+        .ai   { background: #232331; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid #333; }
         .user { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
 
-        /* Mic button states */
-        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195, 143, 255, 0.3); transition: background 0.3s, transform 0.15s; }
+        .btn-mic { width: 76px; height: 76px; border-radius: 50%; border: none; background: var(--accent); font-size: 34px; cursor: pointer; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(195,143,255,0.3); transition: background 0.3s; }
         .btn-mic.listening { background: #ff5c5c; animation: pulse-mic 1s infinite; }
-        .btn-mic.blocked { background: #555; cursor: not-allowed; }
-        @keyframes pulse-mic { 0%,100%{ box-shadow: 0 0 0 0 rgba(255,92,92,0.5);} 50%{ box-shadow: 0 0 0 14px rgba(255,92,92,0);} }
+        .btn-mic.blocked   { background: #444; cursor: not-allowed; }
+        @keyframes pulse-mic { 0%,100%{ box-shadow:0 0 0 0 rgba(255,92,92,0.5);} 50%{ box-shadow:0 0 0 14px rgba(255,92,92,0);} }
 
-        /* Onboarding */
         #onboarding { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .setup-card { background: var(--card); padding: 30px; border-radius: 32px; width: 100%; max-width: 480px; text-align: center; border: 1px solid #333; overflow-y: auto; max-height: 90vh; }
 
@@ -42,78 +60,69 @@
 
         .btn-action { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; font-size: 1rem; }
 
-        /* Gender & Grade selection buttons */
         .choice-group { display: flex; gap: 10px; margin-bottom: 15px; }
         .choice-btn { flex: 1; padding: 14px; border-radius: 14px; border: 2px solid #3d3d4d; background: #050507; color: #fff; font-size: 1rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
         .choice-btn.selected { border-color: var(--accent); background: rgba(195,143,255,0.15); color: var(--accent); font-weight: 700; }
 
         .grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .grade-group-label { grid-column: 1/-1; text-align: left; color: #888; font-size: 0.8rem; padding: 4px 0; }
+        .grade-group-label { grid-column: 1/-1; text-align: left; color: #888; font-size: 0.8rem; padding: 4px 2px; }
+        .q-label { color: var(--accent); font-weight: bold; margin-bottom: 12px; font-size: 1.05rem; }
 
-        .hidden { display: none !important; }
-
-        /* Mic status label */
         #mic-status { text-align: center; font-size: 0.75rem; color: #888; margin-top: 6px; min-height: 18px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="onboarding">
     <div class="setup-card">
-        <h2 id="st-title">Pamuk Ayarları ⚙️</h2>
+        <h2>Pamuk Ayarları ⚙️</h2>
+
         <div id="api-panel">
             <label>API Anahtarı</label>
-            <input type="password" id="key-primary" placeholder="Ana API Anahtarı">
-
+            <input type="password" id="key-primary" placeholder="Gemini API Anahtarı">
             <label>Ses Seçimi</label>
             <select id="voice-select"><option value="">Sesler Hazırlanıyor...</option></select>
-
             <label>Konuşma Hızı</label>
-            <div class="range-wrap">
-                <input type="range" id="rate-range" min="0.5" max="1.5" step="0.1" value="1.0">
-            </div>
-
+            <div class="range-wrap"><input type="range" id="rate-range" min="0.5" max="1.5" step="0.1" value="1.0"></div>
             <label>Ses Tonu (Pitch)</label>
-            <div class="range-wrap">
-                <input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1.0">
-            </div>
-
-            <button class="btn-action" style="background:#2d2d35; color:white; margin-bottom:10px;" onclick="testVoice()">Sesi Dene 🔊</button>
-            <button class="btn-action" onclick="saveConfig()">Kaydet ve Başlat</button>
+            <div class="range-wrap"><input type="range" id="pitch-range" min="0.5" max="1.5" step="0.1" value="1.0"></div>
+            <button class="btn-action" style="background:#2d2d35;color:white;margin-bottom:10px;" onclick="testVoice()">Sesi Dene 🔊</button>
+            <button class="btn-action" onclick="saveConfig()">Kaydet ve Devam Et →</button>
         </div>
 
         <div id="profile-panel" class="hidden">
-            <!-- Step 1: Name -->
-            <div id="step-name">
-                <p style="color: var(--accent); font-weight: bold;">Adın ne?</p>
+            <div id="step-teacher">
+                <p class="q-label">👩‍🏫 Öğretmenin adı ne olsun?</p>
+                <input type="text" id="q-teacher" placeholder="Örn: Ayşe Öğretmen">
+                <button class="btn-action" onclick="goToStudentName()">İlerle →</button>
+            </div>
+            <div id="step-name" class="hidden">
+                <p class="q-label">Öğrencinin adı ne?</p>
                 <input type="text" id="q-name" placeholder="Adını yaz...">
                 <button class="btn-action" onclick="goToGender()">İlerle →</button>
             </div>
-
-            <!-- Step 2: Gender -->
             <div id="step-gender" class="hidden">
-                <p style="color: var(--accent); font-weight: bold;">Cinsiyetin?</p>
+                <p class="q-label">Cinsiyetin?</p>
                 <div class="choice-group">
-                    <button class="choice-btn" id="btn-kiz" onclick="selectGender('Kız')">👧 Kız</button>
+                    <button class="choice-btn" id="btn-kiz"   onclick="selectGender('Kız')">👧 Kız</button>
                     <button class="choice-btn" id="btn-erkek" onclick="selectGender('Erkek')">👦 Erkek</button>
                 </div>
                 <button class="btn-action" onclick="goToGrade()">İlerle →</button>
             </div>
-
-            <!-- Step 3: Grade -->
             <div id="step-grade" class="hidden">
-                <p style="color: var(--accent); font-weight: bold;">Kaçıncı sınıftasın?</p>
+                <p class="q-label">Kaçıncı sınıftasın?</p>
                 <div class="grade-grid">
                     <div class="grade-group-label">📚 İlkokul</div>
-                    <button class="choice-btn" onclick="selectGrade('İlkokul 1. Sınıf')">1. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('İlkokul 2. Sınıf')">2. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('İlkokul 3. Sınıf')">3. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('İlkokul 4. Sınıf')">4. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'İlkokul 1. Sınıf')">1. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'İlkokul 2. Sınıf')">2. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'İlkokul 3. Sınıf')">3. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'İlkokul 4. Sınıf')">4. Sınıf</button>
                     <div class="grade-group-label">🏫 Ortaokul</div>
-                    <button class="choice-btn" onclick="selectGrade('Ortaokul 5. Sınıf')">5. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('Ortaokul 6. Sınıf')">6. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('Ortaokul 7. Sınıf')">7. Sınıf</button>
-                    <button class="choice-btn" onclick="selectGrade('Ortaokul 8. Sınıf')">8. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'Ortaokul 5. Sınıf')">5. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'Ortaokul 6. Sınıf')">6. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'Ortaokul 7. Sınıf')">7. Sınıf</button>
+                    <button class="choice-btn" onclick="selectGrade(this,'Ortaokul 8. Sınıf')">8. Sınıf</button>
                 </div>
             </div>
         </div>
@@ -123,60 +132,104 @@
 <div class="app-shell">
     <button class="settings-trigger" onclick="openSettings()">⚙️</button>
     <div class="char-pane">
-        <!-- Sarı saçlı bayan öğretmen SVG -->
-        <svg id="teacher-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
-            <!-- Gövde / Elbise -->
-            <ellipse cx="100" cy="210" rx="52" ry="55" fill="#7c4dff"/>
-            <!-- Yaka detayı -->
-            <path d="M80 165 Q100 180 120 165 L115 195 Q100 185 85 195 Z" fill="#5c35cc"/>
-            <!-- Boyun -->
-            <rect x="90" y="148" width="20" height="22" rx="8" fill="#f5c5a3"/>
-            <!-- Baş -->
-            <ellipse cx="100" cy="128" rx="38" ry="42" fill="#f5c5a3"/>
-            <!-- Saç - arka -->
-            <ellipse cx="100" cy="110" rx="40" ry="44" fill="#f0c030"/>
-            <!-- Saç - üst ve yanlar -->
-            <path d="M62 120 Q55 80 75 60 Q100 45 125 60 Q145 80 138 120" fill="#f0c030"/>
-            <!-- Saç dalgaları sol -->
-            <path d="M63 130 Q52 155 58 175 Q65 165 68 150 Q66 140 63 130Z" fill="#e8b820"/>
-            <!-- Saç dalgaları sağ -->
-            <path d="M137 130 Q148 155 142 175 Q135 165 132 150 Q134 140 137 130Z" fill="#e8b820"/>
-            <!-- Saç bantı / vurgu -->
-            <path d="M68 98 Q100 88 132 98" stroke="#e8b820" stroke-width="3" fill="none"/>
-            <!-- Alın üstü saç detayı -->
-            <path d="M78 72 Q92 65 100 68 Q108 65 122 72" stroke="#d4a010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            <!-- Gözler -->
-            <ellipse cx="85" cy="122" rx="7" ry="7.5" fill="#fff"/>
-            <ellipse cx="115" cy="122" rx="7" ry="7.5" fill="#fff"/>
-            <circle cx="87" cy="123" r="4.5" fill="#3d2000"/>
-            <circle cx="117" cy="123" r="4.5" fill="#3d2000"/>
-            <!-- Göz parlaklığı -->
-            <circle cx="89" cy="121" r="1.5" fill="#fff"/>
-            <circle cx="119" cy="121" r="1.5" fill="#fff"/>
-            <!-- Kirpikler -->
-            <path d="M78 116 Q82 113 86 116" stroke="#3d2000" stroke-width="1.5" fill="none"/>
-            <path d="M114 116 Q118 113 122 116" stroke="#3d2000" stroke-width="1.5" fill="none"/>
+        <!--
+            SVG katman sırası:
+            1. Saç arka kütlesi  (yüz ovalinin arkasında)
+            2. Yüz oval          (saçın üstünde → yüz hiçbir zaman kapanmaz)
+            3. Saç ön detayı     (sadece alın kenarı, çok ince)
+            4. Yüz özellikleri   (kaş, göz, burun, ağız, yanak)
+        -->
+        <svg id="teacher-svg" viewBox="0 0 200 215" xmlns="http://www.w3.org/2000/svg">
+
+            <!-- ① SAÇ ARKA KÜTLE -->
+            <path d="
+                M 55 100
+                Q 50 28  100 16
+                Q 150 28 145 100
+                Q 152 148 148 178
+                Q 132 205 100 210
+                Q 68  205  52 178
+                Q 48 148  55 100 Z
+            " fill="#e8b520"/>
+            <!-- Yan gölge derinliği -->
+            <path d="M 55 100 Q 47 148 52 178 Q 44 150 44 112 Q 46 72 55 100Z" fill="#c49010" opacity="0.55"/>
+            <path d="M 145 100 Q 153 148 148 178 Q 156 150 156 112 Q 154 72 145 100Z" fill="#c49010" opacity="0.55"/>
+            <!-- Saç parıltı vurgu -->
+            <path d="M 80 22 Q 100 14 120 22 Q 108 18 100 17 Q 92 18 80 22Z" fill="#f5d060" opacity="0.7"/>
+
+            <!-- ② YÜZ OVALİ — saçın ÜSTÜNDE, tam temiz yüzey -->
+            <ellipse cx="100" cy="115" rx="54" ry="66" fill="#f6c9a4"/>
+
+            <!-- ③ SAÇ ÖN DETAY — sadece alın üst kenarına temas eder, yüzü KAPATMAZ -->
+            <!-- Alın saç çizgisi (hafif dalgalı) -->
+            <path d="M 60 72 Q 76 58 100 54 Q 124 58 140 72 Q 124 64 100 62 Q 76 64 60 72Z" fill="#e8b520"/>
+            <!-- Orta ayrım çizgisi -->
+            <line x1="100" y1="54" x2="100" y2="69" stroke="#c49010" stroke-width="1.8" opacity="0.6"/>
+            <!-- Sol alın tel (ince, kısa) -->
+            <path d="M 74 68 Q 80 78 76 88" stroke="#c49010" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.65"/>
+            <!-- Sağ alın tel -->
+            <path d="M 126 68 Q 120 78 124 88" stroke="#c49010" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.65"/>
+
+            <!-- ④ YÜZ ÖZELLİKLERİ -->
+
             <!-- Kaşlar -->
-            <path d="M79 113 Q85 109 91 112" stroke="#8b6000" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M109 112 Q115 109 121 113" stroke="#8b6000" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M 70 93 Q 81 86 92 89"  stroke="#7a5200" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+            <path d="M 108 89 Q 119 86 130 93" stroke="#7a5200" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+
+            <!-- Göz beyazı -->
+            <ellipse cx="82"  cy="105" rx="10.5" ry="9.5" fill="#fffdf8"/>
+            <ellipse cx="118" cy="105" rx="10.5" ry="9.5" fill="#fffdf8"/>
+
+            <!-- İris (kahverengi) -->
+            <circle cx="83"  cy="106" r="6.8" fill="#4a2f00"/>
+            <circle cx="119" cy="106" r="6.8" fill="#4a2f00"/>
+            <!-- Göz bebeği -->
+            <circle cx="83"  cy="106" r="3.8" fill="#1a0d00"/>
+            <circle cx="119" cy="106" r="3.8" fill="#1a0d00"/>
+            <!-- Parlaklık -->
+            <circle cx="85"  cy="103" r="2.2" fill="#fff"/>
+            <circle cx="121" cy="103" r="2.2" fill="#fff"/>
+
+            <!-- Üst kirpik yayı -->
+            <path d="M 71 97 Q 82 91 93 97"   stroke="#2a1400" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <path d="M 107 97 Q 118 91 129 97" stroke="#2a1400" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <!-- Alt kirpik (hafif) -->
+            <path d="M 74 115 Q 82 119 91 116"  stroke="#b07040" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.45"/>
+            <path d="M 109 116 Q 118 119 126 115" stroke="#b07040" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.45"/>
+
             <!-- Burun -->
-            <path d="M97 128 Q100 134 103 128" stroke="#d4956a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-            <!-- Ağız -->
-            <path id="mouth" d="M88 142 Q100 148 112 142" stroke="#c0604a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M 97 120 Q 93 130 97 135" stroke="#d4855a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M 103 120 Q 107 130 103 135" stroke="#d4855a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M 95 135 Q 100 139 105 135" stroke="#d4855a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+
+            <!-- Ağız (animasyonlu) -->
+            <!-- Üst dudak -->
+            <path d="M 86 149 Q 93 143 100 146 Q 107 143 114 149" stroke="#c05040" stroke-width="1.6" fill="#e87060" opacity="0.5"/>
+            <!-- Ana ağız çizgisi -->
+            <path id="mouth" d="M 85 152 Q 100 159 115 152" stroke="#b04030" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+            <!-- Alt dudak vurgu -->
+            <ellipse cx="100" cy="157" rx="10" ry="4" fill="#e87868" opacity="0.22"/>
+
             <!-- Yanak allığı -->
-            <ellipse cx="76" cy="135" rx="8" ry="5" fill="#ffb4a0" opacity="0.5"/>
-            <ellipse cx="124" cy="135" rx="8" ry="5" fill="#ffb4a0" opacity="0.5"/>
-            <!-- Kollar -->
-            <ellipse cx="56" cy="195" rx="14" ry="30" fill="#7c4dff" transform="rotate(-10,56,195)"/>
-            <ellipse cx="144" cy="195" rx="14" ry="30" fill="#7c4dff" transform="rotate(10,144,195)"/>
-            <!-- Eller -->
-            <ellipse cx="50" cy="222" rx="10" ry="12" fill="#f5c5a3"/>
-            <ellipse cx="150" cy="222" rx="10" ry="12" fill="#f5c5a3"/>
-            <!-- Kitap (sağ elde) -->
-            <rect x="138" y="218" width="28" height="20" rx="3" fill="#ff8a65"/>
-            <line x1="152" y1="218" x2="152" y2="238" stroke="#e65c35" stroke-width="1.5"/>
+            <ellipse cx="66"  cy="122" rx="12" ry="7" fill="#ffb49a" opacity="0.36"/>
+            <ellipse cx="134" cy="122" rx="12" ry="7" fill="#ffb49a" opacity="0.36"/>
+
+            <!-- Kulaklar -->
+            <ellipse cx="46"  cy="116" rx="9"  ry="12" fill="#f0b890"/>
+            <ellipse cx="154" cy="116" rx="9"  ry="12" fill="#f0b890"/>
+            <ellipse cx="47"  cy="116" rx="5.5" ry="7.5" fill="#e0a070" opacity="0.45"/>
+            <ellipse cx="153" cy="116" rx="5.5" ry="7.5" fill="#e0a070" opacity="0.45"/>
+
+            <!-- Küpe (inci) -->
+            <line x1="46"  y1="126" x2="46"  y2="136" stroke="#c38fff" stroke-width="1.5"/>
+            <circle cx="46"  cy="139" r="4" fill="#c38fff"/>
+            <line x1="154" y1="126" x2="154" y2="136" stroke="#c38fff" stroke-width="1.5"/>
+            <circle cx="154" cy="139" r="4" fill="#c38fff"/>
+
         </svg>
+        <div id="teacher-name-label">👩‍🏫 Öğretmen</div>
     </div>
+
     <div class="chat-pane">
         <div id="chat-window"></div>
         <button class="btn-mic" id="mic-btn">🎤</button>
@@ -185,217 +238,169 @@
 </div>
 
 <script>
-    /* ── State ── */
     let synth = window.speechSynthesis;
     let voices = [];
     let selectedVoice = null;
-    let p = JSON.parse(localStorage.getItem('p_v14_prof')) || {};
-    let k1 = localStorage.getItem('p_v14_k1');
+    let p           = JSON.parse(localStorage.getItem('p_v15_prof')) || {};
+    let k1          = localStorage.getItem('p_v15_k1');
+    let teacherName = localStorage.getItem('p_v15_teacher') || 'Pamuk Öğretmen';
     let selectedGender = p.gender || null;
-    let selectedGradeVal = p.grade || null;
 
-    /* ── Mic State Machine ── */
-    let micActive = false;   // Bir kez aktif edildikten sonra true kalır
+    let micActive       = false;
     let teacherSpeaking = false;
 
-    /* ── Web Audio beep ── */
+    /* Beep */
     function playBeep() {
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
+            const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+            const osc  = ctx.createOscillator();
             const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = 880;
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sine'; osc.frequency.value = 880;
             gain.gain.setValueAtTime(0.3, ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
         } catch(e) {}
     }
 
-    /* ── Speech Recognition ── */
+    /* Recognition */
     const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    rec.lang = 'tr-TR';
-    rec.continuous = false;
-    rec.interimResults = false;
+    rec.lang = 'tr-TR'; rec.continuous = false; rec.interimResults = false;
 
     function startListening() {
         if (teacherSpeaking) return;
-        try {
-            rec.start();
-            setMicUI('listening');
-        } catch(e) {}
+        try { rec.start(); setMicUI('listening'); } catch(e) {}
     }
-
     rec.onresult = (e) => {
         const t = e.results[0][0].transcript;
-        addB(t, 'user');
-        setMicUI('blocked');
-        callAI(t);
+        addB(t, 'user'); setMicUI('blocked'); callAI(t);
     };
-
-    rec.onend = () => {
-        if (!teacherSpeaking && micActive) {
-            setMicUI('ready');
-        }
-    };
-
-    rec.onerror = () => {
-        if (!teacherSpeaking && micActive) setMicUI('ready');
-    };
+    rec.onend   = () => { if (!teacherSpeaking && micActive) setMicUI('ready'); };
+    rec.onerror = () => { if (!teacherSpeaking && micActive) setMicUI('ready'); };
 
     function setMicUI(state) {
         const btn = document.getElementById('mic-btn');
-        const status = document.getElementById('mic-status');
+        const st  = document.getElementById('mic-status');
         btn.className = 'btn-mic';
-        if (state === 'listening') {
-            btn.classList.add('listening');
-            btn.textContent = '🔴';
-            status.textContent = 'Dinliyorum...';
-        } else if (state === 'blocked') {
-            btn.classList.add('blocked');
-            btn.textContent = '⏸️';
-            status.textContent = 'Öğretmen konuşuyor...';
-        } else if (state === 'ready') {
-            btn.textContent = '🎤';
-            status.textContent = 'Seni dinliyorum, konuş!';
-        } else {
-            btn.textContent = '🎤';
-            status.textContent = 'Başlamak için mikrofona bas';
-        }
+        if      (state==='listening') { btn.classList.add('listening'); btn.textContent='🔴'; st.textContent='Dinliyorum...'; }
+        else if (state==='blocked')   { btn.classList.add('blocked');   btn.textContent='⏸️'; st.textContent='Öğretmen konuşuyor...'; }
+        else if (state==='ready')     { btn.textContent='🎤'; st.textContent='Seni dinliyorum, konuş!'; }
+        else                          { btn.textContent='🎤'; st.textContent='Başlamak için mikrofona bas'; }
     }
 
-    /* İlk kez basınca aktif, sonra otomatik devam eder */
     document.getElementById('mic-btn').onclick = () => {
-        if (!micActive) {
-            micActive = true;
-            startListening();
-        } else if (!teacherSpeaking) {
-            startListening();
-        }
+        if (!micActive) { micActive = true; startListening(); }
+        else if (!teacherSpeaking) { startListening(); }
     };
 
-    /* ── Voices ── */
+    /* Voices */
     function loadVoices() {
-        voices = synth.getVoices().filter(v => v.lang.startsWith('tr'));
-        if (!voices.length) voices = synth.getVoices(); // fallback
-        const vSelect = document.getElementById('voice-select');
-        if (!vSelect) return;
-        vSelect.innerHTML = '';
-        voices.forEach((v, i) => {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = v.name;
-            vSelect.appendChild(opt);
-        });
-        const savedVoiceName = localStorage.getItem('p_v14_voice_name');
-        if (savedVoiceName) {
-            const foundIdx = voices.findIndex(v => v.name === savedVoiceName);
-            if (foundIdx !== -1) vSelect.value = foundIdx;
-        }
+        let all = synth.getVoices();
+        voices = all.filter(v => v.lang.startsWith('tr'));
+        if (!voices.length) voices = all;
+        const sel = document.getElementById('voice-select');
+        if (!sel) return;
+        sel.innerHTML = '';
+        voices.forEach((v,i) => { const o=document.createElement('option'); o.value=i; o.innerText=v.name; sel.appendChild(o); });
+        const saved = localStorage.getItem('p_v15_voice_name');
+        if (saved) { const idx=voices.findIndex(v=>v.name===saved); if(idx!==-1) sel.value=idx; }
     }
-
     if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
 
-    function testVoice() {
-        updateVoiceParams();
-        speak("Merhaba! Ses ayarlarım bu şekilde, nasıl buluyorsun?");
-    }
-
+    function testVoice() { updateVoiceParams(); speak("Merhaba! Ses ayarlarım bu şekilde, nasıl?"); }
     function updateVoiceParams() {
-        const vIdx = document.getElementById('voice-select').value;
-        selectedVoice = voices[vIdx] || voices[0] || null;
+        const idx = document.getElementById('voice-select').value;
+        selectedVoice = voices[idx] || voices[0] || null;
     }
 
-    /* ── Speak ── */
+    /* Speak */
     function speak(text) {
         synth.cancel();
-        teacherSpeaking = true;
-        setMicUI('blocked');
-
+        teacherSpeaking = true; setMicUI('blocked');
         const u = new SpeechSynthesisUtterance(text);
         u.voice = selectedVoice || voices[0] || null;
-        u.lang = 'tr-TR';
-        u.rate = parseFloat(localStorage.getItem('p_v14_rate') || 1.0);
-        u.pitch = parseFloat(localStorage.getItem('p_v14_pitch') || 1.0);
-
-        u.onstart = () => {
-            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 154 112 142');
-        };
-        u.onend = () => {
-            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 148 112 142');
+        u.lang  = 'tr-TR';
+        u.rate  = parseFloat(localStorage.getItem('p_v15_rate')  || 1.0);
+        u.pitch = parseFloat(localStorage.getItem('p_v15_pitch') || 1.0);
+        const mO = 'M 85 152 Q 100 168 115 152';
+        const mC = 'M 85 152 Q 100 159 115 152';
+        u.onstart = () => document.getElementById('mouth').setAttribute('d', mO);
+        u.onend   = () => {
+            document.getElementById('mouth').setAttribute('d', mC);
             teacherSpeaking = false;
-            if (micActive) {
-                // Kısa gecikme sonrası bip + mikrofon aç
-                setTimeout(() => {
-                    playBeep();
-                    setTimeout(() => startListening(), 300);
-                }, 300);
-            }
+            if (micActive) setTimeout(() => { playBeep(); setTimeout(startListening, 300); }, 300);
         };
         u.onerror = () => {
-            document.getElementById('mouth').setAttribute('d', 'M88 142 Q100 148 112 142');
+            document.getElementById('mouth').setAttribute('d', mC);
             teacherSpeaking = false;
-            if (micActive) {
-                setTimeout(() => { playBeep(); startListening(); }, 400);
-            }
+            if (micActive) setTimeout(() => { playBeep(); startListening(); }, 400);
         };
-
         synth.speak(u);
     }
 
-    /* ── Onboarding ── */
+    function updateTeacherLabel() {
+        const lbl = document.getElementById('teacher-name-label');
+        if (lbl) lbl.textContent = '👩‍🏫 ' + teacherName;
+    }
+
+    /* Onboarding */
     function saveConfig() {
         k1 = document.getElementById('key-primary').value.trim();
         updateVoiceParams();
         if (!k1) return alert("API anahtarı gerekli.");
-
-        localStorage.setItem('p_v14_k1', k1);
-        localStorage.setItem('p_v14_voice_name', selectedVoice ? selectedVoice.name : '');
-        localStorage.setItem('p_v14_rate', document.getElementById('rate-range').value);
-        localStorage.setItem('p_v14_pitch', document.getElementById('pitch-range').value);
-
+        localStorage.setItem('p_v15_k1', k1);
+        localStorage.setItem('p_v15_voice_name', selectedVoice ? selectedVoice.name : '');
+        localStorage.setItem('p_v15_rate',  document.getElementById('rate-range').value);
+        localStorage.setItem('p_v15_pitch', document.getElementById('pitch-range').value);
         document.getElementById('api-panel').classList.add('hidden');
         document.getElementById('profile-panel').classList.remove('hidden');
-        document.getElementById('step-name').classList.remove('hidden');
-        document.getElementById('step-gender').classList.add('hidden');
-        document.getElementById('step-grade').classList.add('hidden');
-        speak("Merhaba! Seni tanımak istiyorum. Önce adını söyler misin?");
+        showStep('step-teacher');
+        speak("Harika! Şimdi öğretmenin adını öğrenebilir miyim?");
+    }
+
+    function showStep(id) {
+        ['step-teacher','step-name','step-gender','step-grade'].forEach(s =>
+            document.getElementById(s).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    function goToStudentName() {
+        const v = document.getElementById('q-teacher').value.trim();
+        if (!v) return alert("Lütfen öğretmen adını yaz.");
+        teacherName = v;
+        localStorage.setItem('p_v15_teacher', v);
+        updateTeacherLabel();
+        showStep('step-name');
+        speak("Güzel! Peki öğrencinin adı ne?");
     }
 
     function goToGender() {
-        const nameVal = document.getElementById('q-name').value.trim();
-        if (!nameVal) return alert("Lütfen adını yaz.");
-        p.name = nameVal;
-        document.getElementById('step-name').classList.add('hidden');
-        document.getElementById('step-gender').classList.remove('hidden');
+        const v = document.getElementById('q-name').value.trim();
+        if (!v) return alert("Lütfen adını yaz.");
+        p.name = v;
+        showStep('step-gender');
         speak("Harika! Şimdi cinsiyetini seçer misin?");
     }
 
     function selectGender(g) {
         selectedGender = g;
-        document.querySelectorAll('#step-gender .choice-btn').forEach(b => b.classList.remove('selected'));
-        document.getElementById(g === 'Kız' ? 'btn-kiz' : 'btn-erkek').classList.add('selected');
+        document.querySelectorAll('#step-gender .choice-btn').forEach(b=>b.classList.remove('selected'));
+        document.getElementById(g==='Kız'?'btn-kiz':'btn-erkek').classList.add('selected');
     }
 
     function goToGrade() {
         if (!selectedGender) return alert("Lütfen cinsiyetini seç.");
         p.gender = selectedGender;
-        document.getElementById('step-gender').classList.add('hidden');
-        document.getElementById('step-grade').classList.remove('hidden');
-        speak("Güzel! Şimdi hangi sınıfta olduğunu seçelim.");
+        showStep('step-grade');
+        speak("Güzel! Hangi sınıfta olduğunu seçelim.");
     }
 
-    function selectGrade(g) {
-        selectedGradeVal = g;
+    function selectGrade(el, g) {
         p.grade = g;
-        document.querySelectorAll('#step-grade .choice-btn').forEach(b => b.classList.remove('selected'));
-        event.target.classList.add('selected');
-        // Kısa bekleme sonrası kaydet ve başlat
+        document.querySelectorAll('#step-grade .choice-btn').forEach(b=>b.classList.remove('selected'));
+        el.classList.add('selected');
         setTimeout(() => {
-            localStorage.setItem('p_v14_prof', JSON.stringify(p));
+            localStorage.setItem('p_v15_prof', JSON.stringify(p));
             document.getElementById('onboarding').classList.add('hidden');
             greet();
         }, 400);
@@ -405,63 +410,56 @@
         document.getElementById('onboarding').classList.remove('hidden');
         document.getElementById('api-panel').classList.remove('hidden');
         document.getElementById('profile-panel').classList.add('hidden');
-        // Mevcut anahtarı göster
         if (k1) document.getElementById('key-primary').value = k1;
     }
 
-    /* ── Chat ── */
+    /* Chat */
     function greet() {
-        const hitap = p.gender === 'Kız' ? p.name : p.name;
-        const m = `Merhaba ${hitap}! ${p.grade} öğrencisi olduğunu öğrendim. Bugün hangi konuda çalışmak istersin?`;
-        addB(m, 'ai');
-        speak(m);
+        updateTeacherLabel();
+        const m = `Merhaba ${p.name}! Ben ${teacherName}. ${p.grade} öğrencisi olduğunu öğrendim. Bugün hangi konuda çalışmak istersin?`;
+        addB(m, 'ai'); speak(m);
     }
 
     function addB(t, cl) {
-        const w = document.getElementById('chat-window'), b = document.createElement('div');
-        b.className = `bubble ${cl}`;
-        b.innerText = t;
-        w.appendChild(b);
-        w.scrollTop = w.scrollHeight;
+        const w = document.getElementById('chat-window');
+        const b = document.createElement('div');
+        b.className = `bubble ${cl}`; b.innerText = t;
+        w.appendChild(b); w.scrollTop = w.scrollHeight;
     }
 
-    /* ── AI Call ── */
+    /* AI */
     async function callAI(text) {
-        const pronoun = p.gender === 'Kız' ? 'kız öğrencin' : 'erkek öğrencin';
-        const prompt = `Sen deneyimli ve sıcakkanlı bir ilkokul/ortaokul öğretmenisin. Adın Pamuk Öğretmen.
-Karşındaki ${pronoun} adı ${p.name}, ${p.grade} öğrencisi.
-ÖNEMLİ KONUŞMA KURALLARI:
-- Öğrencine adıyla ya da sadece "sen" diye hitap et. "Canım", "tatlım", "kızım", "oğlum" gibi aşırı hitaplar KULLANMA.
-- Sevecen, teşvik edici ama sade ve doğal bir dil kullan.
-- Robotik değil, gerçek bir öğretmen gibi konuş.
-- Cevabı kısa ve anlaşılır tut.
-- Eğer soru varsa tek bir soruyla devam et.
+        const prompt = `Sen deneyimli ve sıcakkanlı bir öğretmensin. Adın ${teacherName}.
+Karşındaki öğrencinin adı ${p.name}, ${p.grade} öğrencisi, cinsiyeti ${p.gender}.
+KONUŞMA KURALLARI:
+- Öğrenciye adıyla ya da "sen" diye hitap et.
+- "Canım", "tatlım", "kızım", "oğlum" gibi aşırı hitaplar KULLANMA.
+- Sevecen, teşvik edici ve doğal bir dil kullan.
+- Kısa, anlaşılır cevaplar ver.
+- Gerekirse tek bir soruyla devam et.
 Öğrenci: ${text}`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k1}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${k1}`,
+                { method:'POST', headers:{'Content-Type':'application/json'},
+                  body: JSON.stringify({contents:[{parts:[{text:prompt}]}]}) }
+            );
             const data = await res.json();
             if (data.candidates && data.candidates[0]) {
                 const reply = data.candidates[0].content.parts[0].text;
-                addB(reply, 'ai');
-                speak(reply);
-            } else {
-                throw new Error('Boş yanıt');
-            }
-        } catch (e) {
-            const errMsg = "Bağlantıda bir sorun var. API anahtarını kontrol eder misin?";
-            addB(errMsg, 'ai');
-            speak(errMsg);
+                addB(reply,'ai'); speak(reply);
+            } else { throw new Error('Boş yanıt'); }
+        } catch(e) {
+            const err = "Bağlantıda bir sorun var. API anahtarını kontrol eder misin?";
+            addB(err,'ai'); speak(err);
         }
     }
 
-    /* ── Init ── */
+    /* Init */
     window.onload = () => {
         setTimeout(loadVoices, 600);
+        updateTeacherLabel();
         if (k1 && p.grade) {
             document.getElementById('onboarding').classList.add('hidden');
             greet();
